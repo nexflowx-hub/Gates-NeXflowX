@@ -19,6 +19,8 @@ import {
   Clock,
   CheckCircle2,
   XCircle,
+  Timer,
+  RotateCcw,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -61,8 +63,8 @@ const PROVIDERS: Provider[] = [
     borderColor: "border-green-400/20",
     textColor: "text-green-400",
     icon: Smartphone,
-    hasDocs: false,
-    tag: "Em Breve",
+    hasDocs: true,
+    tag: "MB WAY S2S",
   },
   {
     id: "stripe",
@@ -564,6 +566,303 @@ function VivaDocs() {
   )
 }
 
+// ─── SIBS Native V2 Documentation ───────────────────────
+function SibsDocs() {
+  return (
+    <div className="space-y-5 animate-in fade-in duration-300">
+      {/* Hero */}
+      <div className="rounded-xl border border-green-400/10 bg-green-400/[0.03] p-5 sm:p-6">
+        <div className="flex items-start gap-4">
+          <div className="w-11 h-11 rounded-xl bg-green-400/10 border border-green-400/20 flex items-center justify-center shrink-0">
+            <Smartphone className="w-5 h-5 text-green-400" />
+          </div>
+          <div className="min-w-0">
+            <div className="flex items-center gap-2.5 flex-wrap">
+              <h2 className="text-base font-semibold text-white">SIBS Nativo V2</h2>
+              <span className="text-[10px] font-semibold text-green-400 bg-green-400/10 border border-green-400/20 rounded-full px-2 py-0.5">
+                MB WAY S2S
+              </span>
+              <span className="text-[10px] font-semibold text-blue-400 bg-blue-400/10 border border-blue-400/20 rounded-full px-2 py-0.5">
+                v2.0
+              </span>
+            </div>
+            <p className="text-sm text-neutral-400 mt-2 leading-relaxed">
+              A infraestrutura <span className="text-green-400 font-medium">NeXFlowX</span> permite que a NeXor processe
+              transações MB WAY com arquitetura{" "}
+              <span className="text-white font-medium">Server-to-Server (S2S)</span>, mantendo controlo absoluto
+              sobre o funil de conversão no checkout.
+            </p>
+          </div>
+        </div>
+
+        {/* Flow Steps Overview */}
+        <div className="mt-5 grid grid-cols-1 sm:grid-cols-3 gap-3">
+          {[
+            { icon: Code2, label: "1. Iniciar Pagamento", desc: "Backend — Push Notification ao cliente" },
+            { icon: Webhook, label: "2. Receber Webhook", desc: "Servidor — Confirmação de estado" },
+            { icon: CheckCircle2, label: "3. Finalizar Ordem", desc: "Sistema — Captura de fundos" },
+          ].map((s) => (
+            <div
+              key={s.label}
+              className="flex items-center gap-3 rounded-lg bg-neutral-900/50 border border-neutral-800 px-3.5 py-3"
+            >
+              <div className="w-8 h-8 rounded-lg bg-green-400/10 border border-green-400/20 flex items-center justify-center shrink-0">
+                <s.icon className="w-3.5 h-3.5 text-green-400" />
+              </div>
+              <div>
+                <p className="text-xs font-semibold text-white">{s.label}</p>
+                <p className="text-[11px] text-neutral-500">{s.desc}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Section 1 — Auth & Endpoints */}
+      <Section>
+        <SectionHeader icon={Lock} title="Autenticação e Endpoints" step="1" />
+        <div className="p-5 space-y-4">
+          <p className="text-sm text-neutral-400">
+            O tráfego deve ser direcionado para o gateway principal do Proxy.
+          </p>
+
+          {/* Base URL */}
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-[11px] font-bold text-green-400 bg-green-400/10 border border-green-400/20 rounded-md px-2 py-0.5">
+              BASE URL
+            </span>
+            <code className="text-xs font-mono text-neutral-300 bg-neutral-800/50 border border-neutral-700 rounded-md px-2.5 py-1">
+              https://proxy.nexflowx.tech
+            </code>
+          </div>
+
+          {/* Nodes */}
+          <div className="rounded-lg bg-neutral-900 border border-neutral-800 p-3 space-y-2">
+            <p className="text-[11px] font-semibold text-neutral-500 uppercase tracking-wider">Nodes Disponíveis</p>
+            <div className="flex flex-wrap gap-2">
+              {["SIBS_PT_001", "SIBS_PT_002", "SIBS_PT_003"].map((node) => (
+                <span key={node} className="text-[11px] font-mono font-medium text-green-400 bg-green-400/10 border border-green-400/20 rounded-md px-2 py-1">
+                  {node}
+                </span>
+              ))}
+            </div>
+          </div>
+
+          {/* Auth Header */}
+          <div className="space-y-1.5">
+            <p className="text-xs font-semibold text-neutral-400 uppercase tracking-wider">Autenticação (Header)</p>
+            <div className="rounded-lg bg-neutral-900 border border-neutral-800 p-3">
+              <div className="flex items-center gap-3">
+                <code className="text-xs font-mono text-amber-400 w-36 shrink-0">x-proxy-key</code>
+                <code className="text-xs font-mono text-neutral-300">sk_proxy_nexor_...</code>
+              </div>
+            </div>
+          </div>
+        </div>
+      </Section>
+
+      {/* Section 2 — MB WAY S2S Payment Initiation */}
+      <Section>
+        <SectionHeader icon={Code2} title="Iniciação de Pagamento (MB WAY S2S)" step="2" />
+        <div className="p-5 space-y-4">
+          <p className="text-sm text-neutral-400">
+            A iniciação desencadeia um <span className="text-white font-medium">Push Notification</span> (notificação direta)
+            no telemóvel do cliente associado ao número fornecido, eliminando a necessidade de redirecionamentos.
+          </p>
+
+          {/* Endpoint */}
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-[11px] font-bold text-green-400 bg-green-400/10 border border-green-400/20 rounded-md px-2 py-0.5">
+              POST
+            </span>
+            <code className="text-xs font-mono text-neutral-300 bg-neutral-800/50 border border-neutral-700 rounded-md px-2.5 py-1 break-all">
+              /relay/&#123;node_id&#125;/payments
+            </code>
+          </div>
+
+          {/* Headers */}
+          <div className="space-y-1.5">
+            <p className="text-xs font-semibold text-neutral-400 uppercase tracking-wider">Headers Obrigatórios</p>
+            <div className="rounded-lg bg-neutral-900 border border-neutral-800 p-3 space-y-1.5">
+              <div className="flex items-center gap-3">
+                <code className="text-xs font-mono text-amber-400 w-36 shrink-0">Content-Type</code>
+                <code className="text-xs font-mono text-neutral-400">application/json</code>
+              </div>
+              <div className="flex items-center gap-3">
+                <code className="text-xs font-mono text-amber-400 w-36 shrink-0">x-proxy-key</code>
+                <code className="text-xs font-mono text-neutral-400">&lt;A_VOSSA_CHAVE_PROXY&gt;</code>
+              </div>
+            </div>
+          </div>
+
+          {/* Request Body */}
+          <CodeBlock
+            filename="Request Body (JSON)"
+            code={JSON.stringify(
+              {
+                amount: 10.5,
+                method: "MBWAY",
+                phone: "+351912345678",
+                reference: "NX-ORD-9938472",
+              },
+              null,
+              2,
+            )}
+          />
+
+          {/* Params Table */}
+          <ParamTable
+            params={[
+              { name: "amount", type: "number (decimal)", description: "O valor a cobrar em Euros (ex: 10.50)." },
+              { name: "method", type: "string", description: 'O identificador fixo do método: "MBWAY".' },
+              { name: "phone", type: "string", description: "Número de telemóvel do cliente. Recomenda-se a utilização de indicativo (ex: +351)." },
+              { name: "reference", type: "string", description: "O vosso identificador único interno para a transação. Será devolvido nos webhooks." },
+            ]}
+          />
+
+          {/* Response */}
+          <div className="space-y-1.5">
+            <div className="flex items-center gap-2">
+              <CheckCircle2 className="w-3.5 h-3.5 text-green-400" />
+              <p className="text-xs font-semibold text-neutral-400 uppercase tracking-wider">
+                Resposta de Sucesso (Síncrona — HTTP 200)
+              </p>
+            </div>
+            <CodeBlock
+              filename="Response (200 OK)"
+              code={JSON.stringify(
+                {
+                  status: "PENDING",
+                  transactionId: "NX-ORD-9938472",
+                  gateway_id: "4890927701798722",
+                  message: "Por favor, valide o pagamento na sua App MB WAY.",
+                },
+                null,
+                2,
+              )}
+            />
+          </div>
+        </div>
+      </Section>
+
+      {/* Section 3 — Webhooks */}
+      <Section>
+        <SectionHeader icon={Webhook} title="Arquitetura de Webhooks (Push de Estado)" step="3" />
+        <div className="p-5 space-y-4">
+          <p className="text-sm text-neutral-400">
+            Como o pagamento é assíncrono (depende da ação humana na aplicação bancária), o Proxy confirmará
+            o resultado final no vosso servidor, utilizando o Callback URL registado pela vossa chave no nosso sistema.
+          </p>
+          <div className="flex items-start gap-2 rounded-lg bg-blue-400/5 border border-blue-400/10 px-3.5 py-3">
+            <Info className="w-4 h-4 text-blue-400 mt-0.5 shrink-0" />
+            <p className="text-xs text-blue-400/80 leading-relaxed">
+              Os Webhooks são transmitidos do nosso IP de produção (lista branca).
+            </p>
+          </div>
+
+          {/* Webhook Payload */}
+          <div className="space-y-1.5">
+            <p className="text-xs font-semibold text-neutral-400 uppercase tracking-wider">
+              Webhook Payload
+            </p>
+            <CodeBlock
+              filename="Webhook Payload (JSON)"
+              code={JSON.stringify(
+                {
+                  event: "payment.completed",
+                  merchant: {
+                    transactionId: "NX-ORD-9938472",
+                  },
+                  payment: {
+                    method: "MBWAY",
+                    amount: 10.5,
+                    currency: "EUR",
+                    status: "COMPLETED",
+                    processorReference: "4890927701798722",
+                  },
+                  timestamp: "2026-04-27T14:30:00Z",
+                },
+                null,
+                2,
+              )}
+            />
+          </div>
+
+          {/* Status Table */}
+          <div className="space-y-2">
+            <p className="text-xs font-semibold text-neutral-400 uppercase tracking-wider">
+              Dicionário de Estados (payment.status)
+            </p>
+            <div className="rounded-lg bg-neutral-900 border border-neutral-800 p-4 space-y-1">
+              <StatusBadge
+                status="COMPLETED"
+                color="green"
+                description="Os fundos foram capturados com sucesso."
+              />
+              <div className="h-px bg-neutral-800/50" />
+              <StatusBadge
+                status="DECLINED"
+                color="red"
+                description="O cliente cancelou na app ou não havia fundos suficientes. A transação falhou."
+              />
+              <div className="h-px bg-neutral-800/50" />
+              <StatusBadge
+                status="PENDING"
+                color="blue"
+                description="O push foi enviado, a aguardar ação (estado de resposta da API síncrona)."
+              />
+            </div>
+          </div>
+
+          {/* Validation */}
+          <div className="flex items-start gap-2 rounded-lg bg-emerald-400/5 border border-emerald-400/10 px-3.5 py-3">
+            <Shield className="w-4 h-4 text-emerald-400 mt-0.5 shrink-0" />
+            <p className="text-xs text-emerald-400/80 leading-relaxed">
+              <span className="font-medium">Validação de Receção:</span> O vosso servidor deve responder ao webhook com{" "}
+              <code className="text-emerald-400 bg-emerald-400/10 rounded px-1 py-0.5 text-[11px] font-mono">HTTP 200</code>. Qualquer outro
+              código resultará em novas tentativas de entrega automáticas.
+            </p>
+          </div>
+        </div>
+      </Section>
+
+      {/* Operational Notes */}
+      <Section>
+        <SectionHeader icon={Info} title="Notas Operacionais" step="Info" />
+        <div className="p-5 space-y-3">
+          <div className="flex items-start gap-3 rounded-lg bg-neutral-900/50 border border-neutral-800 px-4 py-3">
+            <Timer className="w-4 h-4 text-amber-400 mt-0.5 shrink-0" />
+            <div>
+              <p className="text-xs font-semibold text-white mb-0.5">Timeout</p>
+              <p className="text-xs text-neutral-400 leading-relaxed">
+                A janela de tempo para o cliente aprovar o push na app MB WAY é controlada pela entidade bancária
+                emissora (geralmente entre 3 a 5 minutos).
+              </p>
+            </div>
+          </div>
+          <div className="flex items-start gap-3 rounded-lg bg-neutral-900/50 border border-neutral-800 px-4 py-3">
+            <RotateCcw className="w-4 h-4 text-blue-400 mt-0.5 shrink-0" />
+            <div>
+              <p className="text-xs font-semibold text-white mb-0.5">Retries</p>
+              <p className="text-xs text-neutral-400 leading-relaxed">
+                Em caso de timeout no envio do Webhook para o vosso servidor (por indisponibilidade),
+                o sistema Proxy tentará retransmitir (algoritmo exponential backoff) antes de desistir.
+              </p>
+            </div>
+          </div>
+          <div className="flex items-start gap-2 rounded-lg bg-amber-400/5 border border-amber-400/10 px-3.5 py-3">
+            <XCircle className="w-4 h-4 text-amber-400 mt-0.5 shrink-0" />
+            <p className="text-xs text-amber-400/80 leading-relaxed">
+              <span className="font-medium">Documento restrito.</span> Para anomalias na resposta do node,
+              contactar suporte de integração NeXFlowX.
+            </p>
+          </div>
+        </div>
+      </Section>
+    </div>
+  )
+}
+
 // ─── Coming Soon Card ───────────────────────────────────
 function ComingSoonCard({ provider }: { provider: Provider }) {
   const Icon = provider.icon
@@ -660,6 +959,8 @@ export function DocsView() {
       {/* Active Provider Content */}
       {activeProvider.hasDocs && activeProvider.id === "viva" ? (
         <VivaDocs />
+      ) : activeProvider.hasDocs && activeProvider.id === "sibs" ? (
+        <SibsDocs />
       ) : (
         <ComingSoonCard provider={activeProvider} />
       )}
