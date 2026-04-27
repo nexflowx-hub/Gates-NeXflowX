@@ -15,9 +15,6 @@ import {
   Server,
   X,
   Key,
-  Terminal,
-  Info,
-  Route,
   CreditCard,
   Smartphone,
   Globe,
@@ -746,10 +743,8 @@ function SidePanel({
   onClose: () => void
   onGoToDocs: () => void
 }) {
-  const snippet = useMemo(() => getNodeSnippet(node, apiKey), [node, apiKey])
   const colors = getProviderColor(node.id)
   const hasPublicKey = node.public_key && node.public_key !== "N/A"
-  const jsonPayload = useMemo(() => getJsonPayload(node.id), [node.id])
   const provider = getProviderFromNode(node.id)
   const hasDocs = provider === "viva" || provider === "sibs" || provider === "stripe" || provider === "mollie"
 
@@ -791,11 +786,11 @@ function SidePanel({
 
         {/* Panel Content */}
         <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-5">
-          {/* Quick Info */}
+          {/* Node Info */}
           <div className="space-y-3">
             <div className="flex items-center gap-2">
-              <Route className="w-3.5 h-3.5 text-neutral-500" />
-              <span className="text-xs font-semibold text-neutral-400 uppercase tracking-wider">Quick Docs</span>
+              <Layers className="w-3.5 h-3.5 text-neutral-500" />
+              <span className="text-xs font-semibold text-neutral-400 uppercase tracking-wider">Node Info</span>
             </div>
             <div className="rounded-lg bg-neutral-900/50 border border-neutral-800 p-3 space-y-2.5">
               <div className="flex items-center justify-between">
@@ -821,20 +816,13 @@ function SidePanel({
               </div>
               <div className="h-px bg-neutral-800" />
               <div className="flex items-center justify-between">
-                <span className="text-[11px] text-neutral-500 uppercase tracking-wider">Method</span>
-                <span className="text-xs font-mono text-neutral-300">{snippet.method}</span>
-              </div>
-              <div className="h-px bg-neutral-800" />
-              <div className="flex items-center justify-between">
-                <span className="text-[11px] text-neutral-500 uppercase tracking-wider">Relay Path</span>
-                <span className="text-[11px] font-mono text-neutral-400 truncate ml-3 max-w-[200px]" title={snippet.endpoint}>
-                  {snippet.endpoint.replace(PROXY_BASE, "")}
+                <span className="text-[11px] text-neutral-500 uppercase tracking-wider">Status</span>
+                <span className={cn(
+                  "text-[10px] font-bold border rounded-full px-2 py-0.5",
+                  isOperational(node) ? "text-green-400 bg-green-400/10 border-green-400/20" : "text-neutral-500 bg-neutral-800 border-neutral-700"
+                )}>
+                  {isOperational(node) ? "ACTIVE" : (node.lifecycle_status || "UNKNOWN")}
                 </span>
-              </div>
-              <div className="h-px bg-neutral-800" />
-              <div className="flex items-center justify-between">
-                <span className="text-[11px] text-neutral-500 uppercase tracking-wider">Auth Header</span>
-                <span className="text-[11px] font-mono text-green-400/70">x-proxy-key</span>
               </div>
             </div>
           </div>
@@ -892,80 +880,30 @@ function SidePanel({
             </div>
           )}
 
-          {/* cURL Snippet */}
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Terminal className="w-3.5 h-3.5 text-neutral-500" />
-                <span className="text-xs font-semibold text-neutral-400 uppercase tracking-wider">cURL Request</span>
-              </div>
-              <CopyButton text={snippet.curl} label="Copy cURL" />
-            </div>
-            <div className="rounded-lg bg-neutral-900 border border-neutral-800 overflow-hidden">
-              <pre className="p-3 text-[12px] font-mono text-neutral-300 leading-relaxed overflow-x-auto whitespace-pre">
-                <code>{snippet.curl}</code>
-              </pre>
-            </div>
-          </div>
-
-          {/* JSON Payload */}
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <div className="w-3.5 h-3.5 rounded-sm bg-amber-400/20 border border-amber-400/30" />
-              <span className="text-xs font-semibold text-neutral-400 uppercase tracking-wider">Request Payload</span>
-              <CopyButton text={jsonPayload} label="Copy JSON" />
-            </div>
-            <div className="rounded-lg bg-neutral-900 border border-neutral-800 overflow-hidden">
-              <pre className="p-3 text-[12px] font-mono text-amber-300/80 leading-relaxed overflow-x-auto whitespace-pre">
-                <code>{jsonPayload}</code>
-              </pre>
-            </div>
-          </div>
-
-          {/* Response Example */}
-          {snippet.responseExample && (
+          {/* Docs Shortcut */}
+          {hasDocs && (
             <div className="space-y-2">
               <div className="flex items-center gap-2">
-                <div className="w-3.5 h-3.5 rounded-sm bg-green-400/20 border border-green-400/30" />
-                <span className="text-xs font-semibold text-neutral-400 uppercase tracking-wider">Response Example</span>
-                <CopyButton text={snippet.responseExample} label="Copy" />
+                <BookOpen className="w-3.5 h-3.5 text-neutral-500" />
+                <span className="text-xs font-semibold text-neutral-400 uppercase tracking-wider">Documentation</span>
               </div>
-              <div className="rounded-lg bg-neutral-900 border border-neutral-800 overflow-hidden">
-                <pre className="p-3 text-[12px] font-mono text-green-300/70 leading-relaxed overflow-x-auto whitespace-pre">
-                  <code>{snippet.responseExample}</code>
-                </pre>
-              </div>
+              <button
+                onClick={onGoToDocs}
+                className="w-full flex items-center justify-between gap-3 rounded-lg bg-cyan-400/5 border border-cyan-400/15 px-4 py-3.5 text-left transition-all hover:bg-cyan-400/10 hover:border-cyan-400/25 group"
+              >
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-9 h-9 rounded-lg bg-cyan-400/10 border border-cyan-400/20 flex items-center justify-center shrink-0">
+                    <BookOpen className="w-4 h-4 text-cyan-400" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-white">Ver Documentacao</p>
+                    <p className="text-[11px] text-neutral-500 mt-0.5">Guias de integracao, endpoints e exemplos</p>
+                  </div>
+                </div>
+                <ArrowRight className="w-4 h-4 text-neutral-600 group-hover:text-cyan-400 group-hover:translate-x-0.5 transition-all shrink-0" />
+              </button>
             </div>
           )}
-
-          {/* Note */}
-          {snippet.note && (
-            <div className="flex gap-2.5 rounded-lg bg-green-400/5 border border-green-400/10 px-3.5 py-3">
-              <Info className="w-4 h-4 text-green-400 mt-0.5 shrink-0" />
-              <p className="text-xs text-green-400/80 leading-relaxed">{snippet.note}</p>
-            </div>
-          )}
-
-          {/* Webhook Format */}
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <Route className="w-3.5 h-3.5 text-neutral-500" />
-              <span className="text-xs font-semibold text-neutral-400 uppercase tracking-wider">Webhook Delivery Format</span>
-            </div>
-            <div className="rounded-lg bg-neutral-900 border border-neutral-800 overflow-hidden">
-              <pre className="p-3 text-[12px] font-mono text-neutral-400 leading-relaxed overflow-x-auto whitespace-pre">
-{JSON.stringify({
-  source: "NeXFlowX-Proxy",
-  route: node.id,
-  payload: { /* enriched transaction data */ },
-  timestamp: "2026-04-21T15:45:00Z"
-}, null, 2)}
-              </pre>
-            </div>
-            <p className="text-[11px] text-neutral-600">
-              Events delivered to webhook_callback_url configured in Security &amp; Webhooks.
-            </p>
-          </div>
         </div>
       </motion.div>
     </div>

@@ -76,8 +76,8 @@ const PROVIDERS: Provider[] = [
     borderColor: "border-violet-400/20",
     textColor: "text-violet-400",
     icon: Globe,
-    hasDocs: false,
-    tag: "Em Breve",
+    hasDocs: true,
+    tag: "Ghost Mode",
   },
   {
     id: "mollie",
@@ -876,6 +876,213 @@ function SibsDocs() {
   )
 }
 
+// ─── Stripe International Relay Documentation ──────────
+function StripeDocs() {
+  return (
+    <div className="space-y-5 animate-in fade-in duration-300">
+      {/* Hero */}
+      <div className="rounded-xl border border-violet-400/10 bg-violet-400/[0.03] p-5 sm:p-6">
+        <div className="flex items-start gap-4">
+          <div className="w-11 h-11 rounded-xl bg-violet-400/10 border border-violet-400/20 flex items-center justify-center shrink-0">
+            <Globe className="w-5 h-5 text-violet-400" />
+          </div>
+          <div className="min-w-0">
+            <div className="flex items-center gap-2.5 flex-wrap">
+              <h2 className="text-base font-semibold text-white">NeXFlowX: Stripe International Relay</h2>
+              <span className="text-[10px] font-semibold text-violet-400 bg-violet-400/10 border border-violet-400/20 rounded-full px-2 py-0.5">
+                PASS_THROUGH
+              </span>
+              <span className="text-[10px] font-semibold text-blue-400 bg-blue-400/10 border border-blue-400/20 rounded-full px-2 py-0.5">
+                Ghost Mode
+              </span>
+            </div>
+            <p className="text-sm text-neutral-400 mt-2 leading-relaxed">
+              A <span className="text-violet-400 font-medium">NeXFlowX</span> disponibiliza um tunel direto para as APIs da Stripe.
+              Este no permite utilizar <span className="text-white font-medium">100% das funcionalidades nativas</span> da Stripe{" "}
+              (Payment Intents, Checkout Sessions, Subscricoes) enquanto beneficia da centralizacao de logs e normalizacao{" "}
+              de webhooks do Maestro.
+            </p>
+          </div>
+        </div>
+
+        {/* Relay Nodes */}
+        <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {[
+            { id: "STRIPE_UK_001", region: "United Kingdom", flag: "\uD83C\uDDEC\uD83C\uDDE7" },
+            { id: "STRIPE_PT_001", region: "Portugal", flag: "\uD83C\uDFf5" },
+          ].map((n) => (
+            <div key={n.id} className="flex items-center gap-3 rounded-lg bg-neutral-900/50 border border-neutral-800 px-3.5 py-3">
+              <span className="text-lg">{n.flag}</span>
+              <div className="min-w-0">
+                <code className="text-xs font-mono font-semibold text-violet-400">{n.id}</code>
+                <p className="text-[11px] text-neutral-500">{n.region}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Authentication & Endpoint */}
+      <Section>
+        <SectionHeader icon={Lock} title="Autenticacao &amp; Endpoint" step="Auth" />
+        <div className="p-5 space-y-4">
+          <p className="text-sm text-neutral-400">
+            O Proxy encarrega-se de injetar as chaves secretas. O vosso backend apenas precisa de disparar para o Maestro com a <code className="text-violet-400 bg-violet-400/10 rounded px-1.5 py-0.5 text-[11px] font-mono">x-proxy-key</code>.
+          </p>
+
+          {/* Base URL */}
+          <div className="space-y-2">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-[11px] font-bold text-green-400 bg-green-400/10 border border-green-400/20 rounded-md px-2 py-0.5">BASE URL</span>
+              <code className="text-xs font-mono text-neutral-300 bg-neutral-800/50 border border-neutral-700 rounded-md px-2.5 py-1 break-all">
+                https://proxy.nexflowx.tech/relay/&#123;NODE_ID&#125;/
+              </code>
+            </div>
+          </div>
+
+          {/* Auth Header */}
+          <div className="space-y-1.5">
+            <p className="text-xs font-semibold text-neutral-400 uppercase tracking-wider">Autenticacao (Header)</p>
+            <div className="rounded-lg bg-neutral-900 border border-neutral-800 p-3">
+              <div className="flex items-center gap-3">
+                <code className="text-xs font-mono text-amber-400 w-28 shrink-0">x-proxy-key</code>
+                <code className="text-xs font-mono text-neutral-300">sk_proxy_nexor_...</code>
+              </div>
+            </div>
+          </div>
+
+          {/* Path Mapping Alert */}
+          <div className="flex items-start gap-2 rounded-lg bg-amber-400/5 border border-amber-400/10 px-3.5 py-3">
+            <Info className="w-4 h-4 text-amber-400 mt-0.5 shrink-0" />
+            <div className="text-xs text-amber-400/80 leading-relaxed">
+              <span className="font-semibold">Path Mapping:</span> O Maestro ja inclui o <code className="text-amber-400 bg-amber-400/10 rounded px-1 py-0.5 text-[11px] font-mono">/v1/</code> no roteamento interno.
+              Nao incluam <code className="text-amber-400 bg-amber-400/10 rounded px-1 py-0.5 text-[11px] font-mono">v1</code> no caminho do pedido para evitar erros de 404.
+            </div>
+          </div>
+        </div>
+      </Section>
+
+      {/* Request & Response */}
+      <Section>
+        <SectionHeader icon={Code2} title="Request &amp; Response" step="Step 1" />
+        <div className="p-5 space-y-4">
+          <p className="text-sm text-neutral-400">
+            O Maestro aceita JSON padrao no vosso pedido e converte-o automaticamente para{" "}
+            <code className="text-neutral-300 bg-neutral-800/50 rounded px-1.5 py-0.5 text-[11px] font-mono">application/x-www-form-urlencoded</code>{" "}
+            antes de entregar a Stripe.
+          </p>
+
+          {/* Endpoint Example */}
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-[11px] font-bold text-green-400 bg-green-400/10 border border-green-400/20 rounded-md px-2 py-0.5">
+              POST
+            </span>
+            <code className="text-xs font-mono text-neutral-300 bg-neutral-800/50 border border-neutral-700 rounded-md px-2.5 py-1 break-all">
+              https://proxy.nexflowx.tech/relay/STRIPE_UK_001/payment_intents
+            </code>
+          </div>
+
+          {/* cURL Example */}
+          <div className="space-y-1.5">
+            <p className="text-xs font-semibold text-neutral-400 uppercase tracking-wider">
+              Exemplo: Criar Payment Intent (S2S)
+            </p>
+            <CodeBlock
+              filename="cURL"
+              language="bash"
+              code={`curl -X POST https://proxy.nexflowx.tech/relay/STRIPE_UK_001/payment_intents \\
+  -H "x-proxy-key: [VOSSA_CHAVE]" \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "amount": 2000,
+    "currency": "eur",
+    "payment_method_types": ["card", "bancontact"],
+    "metadata": { "nexor_reference": "ORD-7788" }
+  }'`}
+            />
+          </div>
+
+          <div className="flex items-start gap-2 rounded-lg bg-green-400/5 border border-green-400/10 px-3.5 py-3">
+            <CheckCircle2 className="w-4 h-4 text-green-400 mt-0.5 shrink-0" />
+            <p className="text-xs text-green-400/80 leading-relaxed">
+              <span className="font-medium">Resposta:</span> O Maestro devolve o objeto JSON nativo e completo da Stripe.
+              Consultem a Documentacao Oficial da Stripe para detalhes sobre os campos devolvidos.
+            </p>
+          </div>
+        </div>
+      </Section>
+
+      {/* Webhooks Normalizados */}
+      <Section>
+        <SectionHeader icon={Webhook} title="Webhooks Normalizados" step="Step 2" />
+        <div className="p-5 space-y-4">
+          <p className="text-sm text-neutral-400">
+            O Maestro escuta os eventos da Stripe e converte-os para o formato universal da NeXFlowX.
+          </p>
+
+          {/* Events Table */}
+          <div className="space-y-2">
+            <p className="text-xs font-semibold text-neutral-400 uppercase tracking-wider">
+              Eventos Monitorizados
+            </p>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left">
+                <thead>
+                  <tr className="border-b border-neutral-800">
+                    <th className="px-4 py-2.5 text-[11px] font-semibold text-neutral-500 uppercase tracking-wider">Evento Stripe</th>
+                    <th className="px-4 py-2.5 text-[11px] font-semibold text-neutral-500 uppercase tracking-wider">Estado NeXFlowX</th>
+                    <th className="px-4 py-2.5 text-[11px] font-semibold text-neutral-500 uppercase tracking-wider">Acao Recomendada</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {[
+                    { event: "payment_intent.succeeded", status: "PAID", color: "green", action: "Confirmar encomenda." },
+                    { event: "checkout.session.completed", status: "PAID", color: "green", action: "Confirmar encomenda (fluxo Checkout)." },
+                    { event: "payment_intent.payment_failed", status: "FAILED", color: "red", action: "Notificar falha ao cliente." },
+                    { event: "checkout.session.expired", status: "FAILED", color: "red", action: "Cancelar reserva/encomenda." },
+                  ].map((row, i) => (
+                    <tr key={row.event} className={i < 3 && "border-b border-neutral-800/50"}>
+                      <td className="px-4 py-2.5 text-xs font-mono text-neutral-300">{row.event}</td>
+                      <td className="px-4 py-2.5">
+                        <StatusBadge status={row.status} color={row.color} description="" />
+                      </td>
+                      <td className="px-4 py-2.5 text-xs text-neutral-400">{row.action}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Webhook Payload Example */}
+          <div className="space-y-1.5">
+            <p className="text-xs font-semibold text-neutral-400 uppercase tracking-wider">
+              Exemplo de Payload Recebido (Webhook)
+            </p>
+            <CodeBlock
+              filename="Webhook Payload (JSON)"
+              code={JSON.stringify(
+                {
+                  reference: "ORD-7788",
+                  type: "TRANSACTION",
+                  status: "PAID",
+                  amount: 20.0,
+                  currency: "EUR",
+                  method: "CARD",
+                  processor_reference: "pi_3TQxE4DgoXp61GuQ2ZBDJE5d",
+                  timestamp: "2026-04-28T00:45:00Z",
+                },
+                null,
+                2,
+              )}
+            />
+          </div>
+        </div>
+      </Section>
+    </div>
+  )
+}
+
 // ─── Coming Soon Card ───────────────────────────────────
 function ComingSoonCard({ provider }: { provider: Provider }) {
   const Icon = provider.icon
@@ -974,6 +1181,8 @@ export function DocsView() {
         <VivaDocs />
       ) : activeProvider.hasDocs && activeProvider.id === "sibs" ? (
         <SibsDocs />
+      ) : activeProvider.hasDocs && activeProvider.id === "stripe" ? (
+        <StripeDocs />
       ) : (
         <ComingSoonCard provider={activeProvider} />
       )}
