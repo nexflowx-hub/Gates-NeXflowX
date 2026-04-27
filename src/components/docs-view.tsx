@@ -1,17 +1,15 @@
 "use client"
 
 import { useState, useMemo } from "react"
-import { useAppStore, type ProviderId } from "@/lib/store"
+import { useAppStore } from "@/lib/store"
 import {
   Copy,
   Check,
-  ChevronRight,
   CreditCard,
   Wallet,
   Smartphone,
   Shield,
   ArrowRight,
-  ExternalLink,
   Code2,
   Webhook,
   Info,
@@ -21,8 +19,6 @@ import {
   Clock,
   CheckCircle2,
   XCircle,
-  RotateCcw,
-  Loader2,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -296,26 +292,19 @@ function VivaDocs() {
           </div>
           <div className="min-w-0">
             <div className="flex items-center gap-2.5 flex-wrap">
-              <h2 className="text-base font-semibold text-white">VIVA Smart Checkout</h2>
+              <h2 className="text-base font-semibold text-white">NeXFlowX Payment Maestro</h2>
               <span className="text-[10px] font-semibold text-emerald-400 bg-emerald-400/10 border border-emerald-400/20 rounded-full px-2 py-0.5">
                 Smart Checkout
               </span>
               <span className="text-[10px] font-semibold text-blue-400 bg-blue-400/10 border border-blue-400/20 rounded-full px-2 py-0.5">
-                Pass-Through
+                v2.2
               </span>
             </div>
             <p className="text-sm text-neutral-400 mt-2 leading-relaxed">
-              Bem-vindo ao portal do NeXFlowX Maestro. Esta documentação descreve o fluxo de integração
-              para a <span className="text-emerald-400 font-medium">VIVA Wallet</span> utilizando o modelo{" "}
-              <span className="text-white font-medium">Smart Checkout (Pass-Through)</span>.
-            </p>
-            <p className="text-sm text-neutral-400 mt-2 leading-relaxed">
-              Este modelo delega o processamento de cartões e a conformidade PCI-DSS para o gateway de pagamento,
-              suportando nativamente{" "}
-              <span className="text-white">Cartões de Crédito/Débito</span>,{" "}
-              <span className="text-white">Apple Pay</span>,{" "}
-              <span className="text-white">Google Pay</span> e{" "}
-              <span className="text-white">MB WAY</span>, sem necessidade de desenhar formulários complexos no frontend.
+              A <span className="text-emerald-400 font-medium">NeXFlowX</span> atua como uma camada de orquestração financeira{" "}
+              <span className="text-white font-medium">(Financial Supply Chain)</span>. Toda a comunicação é efetuada através
+              do nosso Proxy Maestro, garantindo que a infraestrutura bancária subjacente permanece invisível para o utilizador final
+              e para as aplicações de consumo.
             </p>
           </div>
         </div>
@@ -323,9 +312,9 @@ function VivaDocs() {
         {/* Flow Steps Overview */}
         <div className="mt-5 grid grid-cols-1 sm:grid-cols-3 gap-3">
           {[
-            { icon: Code2, label: "1. Criar Ordem", desc: "Backend — Gerar orderCode" },
-            { icon: Globe, label: "2. Apresentar Checkout", desc: "Frontend — Redirect ou Iframe" },
-            { icon: Webhook, label: "3. Receber Webhook", desc: "Servidor — Atualizar encomenda" },
+            { icon: Code2, label: "1. Inicializar Sessão", desc: "Backend — Criar ordem de pagamento" },
+            { icon: Globe, label: "2. Interface de Pagamento", desc: "Frontend — Iframe Embutido" },
+            { icon: Webhook, label: "3. Receber Webhook", desc: "Servidor — Notificação de estado" },
           ].map((s) => (
             <div
               key={s.label}
@@ -343,36 +332,49 @@ function VivaDocs() {
         </div>
       </div>
 
-      {/* Step 1 — Create Payment Order */}
+      {/* Autenticação */}
       <Section>
-        <SectionHeader icon={Code2} title="Criar uma Ordem de Pagamento" step="Step 1" />
+        <SectionHeader icon={Lock} title="Autenticação" step="Auth" />
         <div className="p-5 space-y-4">
           <p className="text-sm text-neutral-400">
-            Para iniciar um pagamento, o seu servidor deve efetuar um pedido autenticado à API NeXFlowX
-            para gerar um <span className="text-white font-medium">orderCode</span> único.
+            Todas as chamadas à API devem incluir a chave de segurança no cabeçalho:
+          </p>
+          <div className="rounded-lg bg-neutral-900 border border-neutral-800 p-3">
+            <div className="flex items-center gap-3">
+              <code className="text-xs font-mono text-amber-400 w-36 shrink-0">x-proxy-key</code>
+              <code className="text-xs font-mono text-neutral-300">sk_proxy_nexor_nex13467928x04x2026</code>
+            </div>
+          </div>
+        </div>
+      </Section>
+
+      {/* Step 1 — Initialize Payment Session */}
+      <Section>
+        <SectionHeader icon={Code2} title="Inicializar Sessão (Server-to-Server)" step="Step 1" />
+        <div className="p-5 space-y-4">
+          <p className="text-sm text-neutral-400">
+            O vosso backend solicita a criação de uma ordem de pagamento. O montante deve ser enviado em Euros (decimal).
           </p>
 
           {/* Endpoint Badge */}
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-[11px] font-bold text-green-400 bg-green-400/10 border border-green-400/20 rounded-md px-2 py-0.5">
-              POST
-            </span>
-            <code className="text-xs font-mono text-neutral-300 bg-neutral-800/50 border border-neutral-700 rounded-md px-2.5 py-1 break-all">
-              https://proxy.nexflowx.tech/relay/VIVA_PT_001/checkout/v2/orders
-            </code>
-          </div>
-
-          {/* Headers */}
-          <div className="space-y-1.5">
-            <p className="text-xs font-semibold text-neutral-400 uppercase tracking-wider">Headers Obrigatórios</p>
-            <div className="rounded-lg bg-neutral-900 border border-neutral-800 p-3 space-y-1.5">
-              <div className="flex items-center gap-3">
-                <code className="text-xs font-mono text-amber-400 w-36 shrink-0">Content-Type</code>
-                <code className="text-xs font-mono text-neutral-400">application/json</code>
-              </div>
-              <div className="flex items-center gap-3">
-                <code className="text-xs font-mono text-amber-400 w-36 shrink-0">x-proxy-key</code>
-                <code className="text-xs font-mono text-neutral-400">&lt;A_SUA_CHAVE_DE_API_NEXFLOWX&gt;</code>
+          <div className="space-y-2">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-[11px] font-bold text-green-400 bg-green-400/10 border border-green-400/20 rounded-md px-2 py-0.5">
+                POST
+              </span>
+              <code className="text-xs font-mono text-neutral-300 bg-neutral-800/50 border border-neutral-700 rounded-md px-2.5 py-1 break-all">
+                https://proxy.nexflowx.tech/relay/{NODE_ID}/payments
+              </code>
+            </div>
+            {/* Nodes Available */}
+            <div className="rounded-lg bg-neutral-900 border border-neutral-800 p-3 space-y-2">
+              <p className="text-[11px] font-semibold text-neutral-500 uppercase tracking-wider">Nodes Disponíveis</p>
+              <div className="flex flex-wrap gap-2">
+                {["VIVA_PT_001", "VIVA_PT_002"].map((node) => (
+                  <span key={node} className="text-[11px] font-mono font-medium text-emerald-400 bg-emerald-400/10 border border-emerald-400/20 rounded-md px-2 py-1">
+                    {node}
+                  </span>
+                ))}
               </div>
             </div>
           </div>
@@ -380,21 +382,23 @@ function VivaDocs() {
           {/* Request Body */}
           <CodeBlock
             filename="Request Body (JSON)"
-            code={JSON.stringify({
-              amount: 2500,
-              reference: "ORD-2026-001",
-              customerTrns: "Pagamento Fatura #ORD-2026-001",
-              sourceCode: "8851",
-            }, null, 2)}
+            code={JSON.stringify(
+              {
+                amount: 10.5,
+                method: "SMART_CHECKOUT",
+                reference: "NEXOR_ORDER_9988",
+              },
+              null,
+              2,
+            )}
           />
 
           {/* Params Table */}
           <ParamTable
             params={[
-              { name: "amount", type: "integer", description: "Valor da transação em cêntimos (ex: 2500 representa 25.00€)." },
-              { name: "reference", type: "string", description: "O ID único da encomenda no seu sistema. Esta referência será devolvida nos webhooks." },
-              { name: "customerTrns", type: "string", description: "Descrição amigável que aparecerá no ecrã de pagamento e no extrato do cliente." },
-              { name: "sourceCode", type: "string", description: 'O código de 4 dígitos da sua "Fonte de Pagamento", configurado no painel da Viva.' },
+              { name: "amount", type: "number (decimal)", description: 'Montante do pagamento em Euros, formato decimal (ex: 10.50).' },
+              { name: "method", type: "string", description: 'Método de pagamento. Para VIVA Smart Checkout utilizar: "SMART_CHECKOUT".' },
+              { name: "reference", type: "string", description: "Identificador único da ordem no seu sistema. Será devolvido nos webhooks para reconciliation." },
             ]}
           />
 
@@ -408,88 +412,77 @@ function VivaDocs() {
             </div>
             <CodeBlock
               filename="Response (200 OK)"
-              code={JSON.stringify({
-                orderCode: 4160204319947614,
-              }, null, 2)}
+              code={JSON.stringify(
+                {
+                  status: "PENDING",
+                  transactionId: "NEXOR_ORDER_9988",
+                  gateway_id: "4890479297281138",
+                },
+                null,
+                2,
+              )}
             />
           </div>
         </div>
       </Section>
 
-      {/* Step 2 — Frontend Integration */}
+      {/* Step 2 — Frontend Integration (Iframe) */}
       <Section>
-        <SectionHeader icon={Globe} title="Integração no Frontend" step="Step 2" />
+        <SectionHeader icon={Globe} title="Interface de Pagamento (Frontend)" step="Step 2" />
         <div className="p-5 space-y-5">
           <p className="text-sm text-neutral-400">
-            Com o <span className="text-white font-medium">orderCode</span> gerado, a sua aplicação frontend
-            deve encaminhar o cliente para o ambiente seguro da Viva. Pode fazê-lo através de dois métodos
-            suportados: <span className="text-white">Redirecionamento</span> ou <span className="text-white">Iframe</span>.
+            Utilizem o <span className="text-white font-medium">gateway_id</span> recebido para carregar a interface.
+            O URL base é:
           </p>
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-[11px] font-bold text-green-400 bg-green-400/10 border border-green-400/20 rounded-md px-2 py-0.5">
+              BASE URL
+            </span>
+            <code className="text-xs font-mono text-neutral-300 bg-neutral-800/50 border border-neutral-700 rounded-md px-2.5 py-1 break-all">
+              https://www.vivapayments.com/web/checkout?ref={gateway_id}
+            </code>
+          </div>
 
-          {/* Method A */}
+          {/* Iframe Embed (Recommended) */}
           <div className="space-y-3">
             <div className="flex items-center gap-2">
               <span className="text-[10px] font-bold text-green-400 bg-green-400/10 border border-green-400/20 rounded-full px-2 py-0.5">
                 Recomendado
               </span>
-              <h4 className="text-sm font-semibold text-white">Método A: Redirecionamento Direto</h4>
+              <h4 className="text-sm font-semibold text-white">Iframe Embutido</h4>
             </div>
             <p className="text-xs text-neutral-500">
-              Esta é a abordagem mais robusta, garantindo 100% de compatibilidade com Apple Pay e fluxos bancários
-              de autenticação forte (3D Secure).
+              Esta opção mantém o utilizador no vosso ecossistema.
             </p>
             <CodeBlock
-              filename="JavaScript"
-              language="javascript"
-              code={`// Exemplo JavaScript - Redirecionar o cliente\nconst orderCode = 4160204319947614; // Recebido do backend\nconst vivaCheckoutUrl = \`https://www.vivapayments.com/web/checkout?ref=\${orderCode}\`;\n\nwindow.location.href = vivaCheckoutUrl;`}
-            />
-          </div>
-
-          {/* Divider */}
-          <div className="flex items-center gap-3">
-            <div className="flex-1 h-px bg-neutral-800" />
-            <span className="text-[10px] text-neutral-600 uppercase tracking-wider">ou</span>
-            <div className="flex-1 h-px bg-neutral-800" />
-          </div>
-
-          {/* Method B */}
-          <div className="space-y-3">
-            <h4 className="text-sm font-semibold text-white">Método B: Integração via Iframe (Modal)</h4>
-            <p className="text-xs text-neutral-500">
-              Se pretender manter o cliente na sua página sem um redirecionamento total, pode incorporar
-              o Smart Checkout num Iframe.
-            </p>
-            <CodeBlock
-              filename="HTML + JavaScript"
+              filename="HTML"
               language="html"
-              code={`<div id="viva-checkout-container" style="width: 100%; height: 600px; border: none;">
-n  <iframe
-n    id="viva-iframe"
-n    width="100%"
-n    height="100%"
-n    frameborder="0"
-n    allowtransparency="true"
-n    style="border: 0;"
-n  ></iframe>
-n</div>
-n
-n<script>
-n  function openSmartCheckout(orderCode) {
-n    const iframe = document.getElementById('viva-iframe');
-n    // Adicionar parâmetro &color=... para personalizar a cor primária se desejar
-n    iframe.src = \`https://www.vivapayments.com/web/checkout?ref=\${orderCode}\`;
-n  }
-n
-n  // Chamar a função após receber o orderCode da sua API
-n  openSmartCheckout('4160204319947614');
-n</script>`}
+              code={`<iframe\n  src="https://www.vivapayments.com/web/checkout?ref=4890479297281138"\n  allow="payment"\n  sandbox="allow-scripts allow-forms allow-same-origin allow-popups"\n  style="width: 100%; height: 650px; border: none; border-radius: 12px; background: transparent;"\n></iframe>`}
             />
-            <div className="flex items-start gap-2 rounded-lg bg-blue-400/5 border border-blue-400/10 px-3.5 py-3">
-              <Info className="w-4 h-4 text-blue-400 mt-0.5 shrink-0" />
-              <p className="text-xs text-blue-400/80 leading-relaxed">
-                Após o pagamento no Iframe, a Viva redirecionará o conteúdo do Iframe para a sua{" "}
-                <span className="font-medium">Success URL</span> configurada no portal.
-              </p>
+
+            {/* Critical Alerts */}
+            <div className="space-y-2">
+              <div className="flex items-start gap-2 rounded-lg bg-red-400/5 border border-red-400/10 px-3.5 py-3">
+                <XCircle className="w-4 h-4 text-red-400 mt-0.5 shrink-0" />
+                <div className="text-xs text-red-400/80 leading-relaxed">
+                  <span className="font-semibold">Atributo allow="payment":</span> Obrigatório. Sem esta flag, o browser bloqueia o Apple Pay,
+                  Google Pay e a biometria necessária para o 3D Secure 2.0 (SCA).
+                </div>
+              </div>
+              <div className="flex items-start gap-2 rounded-lg bg-amber-400/5 border border-amber-400/10 px-3.5 py-3">
+                <Info className="w-4 h-4 text-amber-400 mt-0.5 shrink-0" />
+                <div className="text-xs text-amber-400/80 leading-relaxed">
+                  <span className="font-semibold">Dimensionamento:</span> Recomendamos uma altura mínima de 650px para garantir que os métodos de pagamento
+                  e botões de submissão estão sempre visíveis sem scroll interno excessivo.
+                </div>
+              </div>
+              <div className="flex items-start gap-2 rounded-lg bg-blue-400/5 border border-blue-400/10 px-3.5 py-3">
+                <Info className="w-4 h-4 text-blue-400 mt-0.5 shrink-0" />
+                <div className="text-xs text-blue-400/80 leading-relaxed">
+                  <span className="font-semibold">Cross-Origin:</span> O checkout emite eventos via postMessage. O vosso frontend pode escutar
+                  estes eventos para fechar o modal automaticamente em caso de sucesso.
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -497,63 +490,58 @@ n</script>`}
 
       {/* Step 3 — Webhooks */}
       <Section>
-        <SectionHeader icon={Webhook} title="Receção de Eventos Assíncronos (Webhooks)" step="Step 3" />
+        <SectionHeader icon={Webhook} title="Notificação de Estado (Webhooks)" step="Step 3" />
         <div className="p-5 space-y-4">
           <p className="text-sm text-neutral-400">
-            O NeXFlowX Maestro monitoriza o ciclo de vida do pagamento junto da VIVA e notifica o seu servidor
-            em tempo real sobre qualquer alteração de estado. Os Webhooks são a{" "}
-            <span className="text-white font-medium">fonte de verdade</span> para atualizar as encomendas
-            na sua base de dados.
+            Assim que o pagamento for processado, o Maestro envia uma notificação para o vosso servidor.
           </p>
 
           {/* Webhook Payload */}
           <div className="space-y-1.5">
             <p className="text-xs font-semibold text-neutral-400 uppercase tracking-wider">
-              Carga Útil do Webhook
+              Webhook Payload
             </p>
             <CodeBlock
               filename="Webhook Payload (JSON)"
-              code={JSON.stringify({
-                reference: "ORD-2026-001",
-                type: "TRANSACTION",
-                status: "PAID",
-                amount: 2500,
-                currency: "EUR",
-                method: "CARD",
-                processor_reference: "e5513d7e-0000-0000-0000-000000000000",
-                timestamp: "2026-04-24T10:30:00.000Z",
-              }, null, 2)}
+              code={JSON.stringify(
+                {
+                  reference: "NEXOR_ORDER_9988",
+                  type: "TRANSACTION",
+                  status: "PAID",
+                  amount: 10.5,
+                  currency: "EUR",
+                  method: "CARD",
+                  processor_reference: "4890479297281138",
+                  timestamp: "2026-04-27T10:53:00Z",
+                },
+                null,
+                2,
+              )}
             />
           </div>
 
           {/* Status Table */}
           <div className="space-y-2">
             <p className="text-xs font-semibold text-neutral-400 uppercase tracking-wider">
-              Tabela de Estados Possíveis
+              Estados Possíveis
             </p>
             <div className="rounded-lg bg-neutral-900 border border-neutral-800 p-4 space-y-1">
               <StatusBadge
                 status="PAID"
                 color="green"
-                description="O pagamento foi capturado com sucesso. Pode aprovar a encomenda e libertar os bens/serviços."
+                description="Pagamento confirmado. Libertar bens/serviços."
               />
               <div className="h-px bg-neutral-800/50" />
               <StatusBadge
                 status="FAILED"
                 color="red"
-                description="O pagamento foi recusado pelo banco (fundos insuficientes, cartão expirado, fraude). A encomenda deve ser cancelada."
-              />
-              <div className="h-px bg-neutral-800/50" />
-              <StatusBadge
-                status="REFUNDED"
-                color="amber"
-                description="O valor foi total ou parcialmente devolvido ao cliente. A encomenda deve ser ajustada."
+                description="Transação recusada ou cancelada."
               />
               <div className="h-px bg-neutral-800/50" />
               <StatusBadge
                 status="PENDING"
                 color="blue"
-                description="O pagamento foi iniciado mas aguarda validação (estado de transição, não implica entrega de bens)."
+                description="Aguarda ação do utilizador (ex: referência gerada)."
               />
             </div>
           </div>
