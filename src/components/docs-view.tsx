@@ -363,7 +363,7 @@ function VivaDocs() {
                 POST
               </span>
               <code className="text-xs font-mono text-neutral-300 bg-neutral-800/50 border border-neutral-700 rounded-md px-2.5 py-1 break-all">
-                https://proxy.nexflowx.tech/relay/{NODE_ID}/payments
+                https://proxy.nexflowx.tech/relay/&#123;NODE_ID&#125;/payments
               </code>
             </div>
             {/* Nodes Available */}
@@ -439,7 +439,7 @@ function VivaDocs() {
               BASE URL
             </span>
             <code className="text-xs font-mono text-neutral-300 bg-neutral-800/50 border border-neutral-700 rounded-md px-2.5 py-1 break-all">
-              https://www.vivapayments.com/web/checkout?ref={gateway_id}
+              https://www.vivapayments.com/web/checkout?ref=&#123;gateway_id&#125;
             </code>
           </div>
 
