@@ -1,14 +1,12 @@
 "use client"
 
 import { useState, useEffect, useCallback, useMemo } from "react"
-import { useAppStore, type ProviderId, type ViewMode } from "@/lib/store"
+import { useAppStore, type ProviderId, type FamilyId } from "@/lib/store"
 import { useClientData } from "@/components/security-view"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { motion, AnimatePresence } from "framer-motion"
 import {
-  LayoutGrid,
-  List,
   Copy,
   Check,
   AlertTriangle,
@@ -18,7 +16,6 @@ import {
   X,
   Key,
   Terminal,
-  ChevronRight,
   Info,
   Route,
   CreditCard,
@@ -29,12 +26,14 @@ import {
   ArrowRight,
   Lock,
   BookOpen,
-  Shield,
-  Send,
   Landmark,
   CircleDot,
   Clock,
+  MapPin,
+  Layers,
+  ChevronRight,
 } from "lucide-react"
+import type { LucideIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 // ─── Types ──────────────────────────────────────────────
@@ -68,6 +67,208 @@ interface EnrichedNode extends PaymentNode {
   integrationType: "PASS_THROUGH" | "NATIVE" | "UNKNOWN"
   region: string
   hasCapabilities: boolean
+}
+
+// ─── Family Definitions ─────────────────────────────────
+interface FamilyDef {
+  id: FamilyId
+  label: string
+  icon: LucideIcon
+  color: string
+  subtitle: string
+  nodeMatch: string | null
+  docsProvider: ProviderId | null
+  hasVivaCountries: boolean
+  children: string[]
+  placeholder: boolean
+  placeholderTag?: string
+}
+
+const FAMILIES: FamilyDef[] = [
+  {
+    id: "stripe",
+    label: "Stripe",
+    icon: CreditCard,
+    color: "violet",
+    subtitle: "Relay Universal — Ghost Mode",
+    nodeMatch: "STRIPE",
+    docsProvider: "stripe",
+    hasVivaCountries: false,
+    children: [],
+    placeholder: false,
+  },
+  {
+    id: "sibs",
+    label: "SIBS",
+    icon: Smartphone,
+    color: "green",
+    subtitle: "Native API — MB WAY & Multibanco",
+    nodeMatch: "SIBS",
+    docsProvider: "sibs",
+    hasVivaCountries: false,
+    children: [],
+    placeholder: false,
+  },
+  {
+    id: "eupago",
+    label: "Eupago",
+    icon: Landmark,
+    color: "teal",
+    subtitle: "Pagamentos Portugal",
+    nodeMatch: null,
+    docsProvider: null,
+    hasVivaCountries: false,
+    children: [],
+    placeholder: true,
+    placeholderTag: "Em Breve",
+  },
+  {
+    id: "viva",
+    label: "Viva",
+    icon: Wallet,
+    color: "emerald",
+    subtitle: "Smart Checkout — Pass-Through",
+    nodeMatch: "VIVA",
+    docsProvider: "viva",
+    hasVivaCountries: true,
+    children: [],
+    placeholder: false,
+  },
+  {
+    id: "sepa",
+    label: "SEPA",
+    icon: ArrowRight,
+    color: "rose",
+    subtitle: "Transferências Instantâneas",
+    nodeMatch: null,
+    docsProvider: null,
+    hasVivaCountries: false,
+    children: [],
+    placeholder: true,
+    placeholderTag: "Em Breve",
+  },
+  {
+    id: "mollie",
+    label: "Mollie",
+    icon: Globe,
+    color: "amber",
+    subtitle: "Relay com Webhook Enrichment",
+    nodeMatch: "MOLLIE",
+    docsProvider: "mollie",
+    hasVivaCountries: false,
+    children: [],
+    placeholder: false,
+  },
+  {
+    id: "brasil",
+    label: "Brasil",
+    icon: Zap,
+    color: "lime",
+    subtitle: "MisticPay · ElitePay",
+    nodeMatch: null,
+    docsProvider: null,
+    hasVivaCountries: false,
+    children: ["MisticPay", "ElitePay"],
+    placeholder: true,
+    placeholderTag: "Em Breve",
+  },
+  {
+    id: "crypto",
+    label: "Crypto",
+    icon: Lock,
+    color: "orange",
+    subtitle: "Nowpayments · OnRamp · Kucoin",
+    nodeMatch: null,
+    docsProvider: null,
+    hasVivaCountries: false,
+    children: ["Nowpayments", "OnRamp", "Kucoin"],
+    placeholder: true,
+    placeholderTag: "Em Breve",
+  },
+]
+
+// ─── Family color map ──────────────────────────────────
+const FAMILY_COLORS: Record<string, {
+  main: string
+  bg: string
+  border: string
+  glow: string
+  ring: string
+  badge: string
+  gradient: string
+}> = {
+  violet: {
+    main: "text-violet-400",
+    bg: "bg-violet-400/10",
+    border: "border-violet-400/20",
+    glow: "shadow-[0_0_30px_rgba(139,92,246,0.12)]",
+    ring: "ring-violet-400/30",
+    badge: "bg-violet-400/10 text-violet-400 border-violet-400/20",
+    gradient: "from-violet-500/20 via-violet-500/5 to-transparent",
+  },
+  green: {
+    main: "text-green-400",
+    bg: "bg-green-400/10",
+    border: "border-green-400/20",
+    glow: "shadow-[0_0_30px_rgba(34,197,94,0.12)]",
+    ring: "ring-green-400/30",
+    badge: "bg-green-400/10 text-green-400 border-green-400/20",
+    gradient: "from-green-500/20 via-green-500/5 to-transparent",
+  },
+  teal: {
+    main: "text-teal-400",
+    bg: "bg-teal-400/10",
+    border: "border-teal-400/20",
+    glow: "shadow-[0_0_30px_rgba(20,184,166,0.12)]",
+    ring: "ring-teal-400/30",
+    badge: "bg-teal-400/10 text-teal-400 border-teal-400/20",
+    gradient: "from-teal-500/20 via-teal-500/5 to-transparent",
+  },
+  emerald: {
+    main: "text-emerald-400",
+    bg: "bg-emerald-400/10",
+    border: "border-emerald-400/20",
+    glow: "shadow-[0_0_30px_rgba(52,211,153,0.12)]",
+    ring: "ring-emerald-400/30",
+    badge: "bg-emerald-400/10 text-emerald-400 border-emerald-400/20",
+    gradient: "from-emerald-500/20 via-emerald-500/5 to-transparent",
+  },
+  rose: {
+    main: "text-rose-400",
+    bg: "bg-rose-400/10",
+    border: "border-rose-400/20",
+    glow: "shadow-[0_0_30px_rgba(244,63,94,0.12)]",
+    ring: "ring-rose-400/30",
+    badge: "bg-rose-400/10 text-rose-400 border-rose-400/20",
+    gradient: "from-rose-500/20 via-rose-500/5 to-transparent",
+  },
+  amber: {
+    main: "text-amber-400",
+    bg: "bg-amber-400/10",
+    border: "border-amber-400/20",
+    glow: "shadow-[0_0_30px_rgba(251,191,36,0.12)]",
+    ring: "ring-amber-400/30",
+    badge: "bg-amber-400/10 text-amber-400 border-amber-400/20",
+    gradient: "from-amber-500/20 via-amber-500/5 to-transparent",
+  },
+  lime: {
+    main: "text-lime-400",
+    bg: "bg-lime-400/10",
+    border: "border-lime-400/20",
+    glow: "shadow-[0_0_30px_rgba(132,204,22,0.12)]",
+    ring: "ring-lime-400/30",
+    badge: "bg-lime-400/10 text-lime-400 border-lime-400/20",
+    gradient: "from-lime-500/20 via-lime-500/5 to-transparent",
+  },
+  orange: {
+    main: "text-orange-400",
+    bg: "bg-orange-400/10",
+    border: "border-orange-400/20",
+    glow: "shadow-[0_0_30px_rgba(249,115,22,0.12)]",
+    ring: "ring-orange-400/30",
+    badge: "bg-orange-400/10 text-orange-400 border-orange-400/20",
+    gradient: "from-orange-500/20 via-orange-500/5 to-transparent",
+  },
 }
 
 // ─── API Hooks ──────────────────────────────────────────
@@ -266,158 +467,212 @@ function getJsonPayload(nodeId: string): string {
 }
 
 // ─── Framer Motion Variants ─────────────────────────────
-const cardVariants = {
-  hidden: { opacity: 0, y: 12 },
+const familyCardVariants = {
+  hidden: { opacity: 0, y: 16, scale: 0.97 },
   visible: (i: number) => ({
-    opacity: 1, y: 0,
-    transition: { delay: i * 0.04, duration: 0.3, ease: "easeOut" },
+    opacity: 1,
+    y: 0,
+    scale: 1,
+    transition: {
+      delay: i * 0.06,
+      duration: 0.4,
+      ease: [0.25, 0.46, 0.45, 0.94] as [number, number, number, number],
+    },
   }),
   exit: { opacity: 0, scale: 0.96, transition: { duration: 0.2 } },
 }
 
-const listRowVariants = {
-  hidden: { opacity: 0, x: -12 },
-  visible: (i: number) => ({
-    opacity: 1, x: 0,
-    transition: { delay: i * 0.03, duration: 0.25, ease: "easeOut" },
-  }),
-  exit: { opacity: 0, x: 12, transition: { duration: 0.15 } },
+const panelOverlayVariants = {
+  hidden: { opacity: 0 },
+  visible: { opacity: 1, transition: { duration: 0.25 } },
+  exit: { opacity: 0, transition: { duration: 0.2 } },
 }
 
-// ─── Node Card ──────────────────────────────────────────
-function NodeCard({
-  node,
-  enriched,
+const panelSlideVariants = {
+  hidden: { x: "100%" },
+  visible: { x: 0, transition: { type: "spring" as const, damping: 28, stiffness: 220 } },
+  exit: { x: "100%", transition: { duration: 0.2, ease: "easeIn" as const } },
+}
+
+const bannerVariants = {
+  hidden: { opacity: 0, y: -8 },
+  visible: { opacity: 1, y: 0, transition: { delay: 0.1, duration: 0.35 } },
+}
+
+// ─── Family Card Component ──────────────────────────────
+interface FamilyData {
+  family: FamilyDef
+  nodes: EnrichedNode[]
+  aggregatedMethods: string[]
+  aggregatedCurrencies: string[]
+  hasOperational: boolean
+  hasOnboarding: boolean
+  integrationType: "NATIVE" | "PASS_THROUGH" | "UNKNOWN"
+}
+
+function FamilyCard({
+  familyData,
   index,
-  onNavigate,
+  onCardClick,
+  onDocsClick,
+  onVivaCountriesClick,
 }: {
-  node: PaymentNode
-  enriched: EnrichedNode
+  familyData: FamilyData
   index: number
-  onNavigate: () => void
+  onCardClick: () => void
+  onDocsClick: (e: React.MouseEvent) => void
+  onVivaCountriesClick: (e: React.MouseEvent) => void
 }) {
-  const colors = getProviderColor(node.id)
-  const operational = isOperational(node)
-  const onboarding = node.lifecycle_status === "ONBOARDING"
-  const maintenance = node.lifecycle_status === "MAINTENANCE"
-  const hasPublicKey = node.public_key && node.public_key !== "N/A"
-  const provider = getProviderFromNode(node.id)
-  const hasDocs = provider === "viva" // Currently only VIVA has docs
+  const { family, nodes, aggregatedMethods, aggregatedCurrencies, hasOperational, hasOnboarding, integrationType } = familyData
+  const colors = FAMILY_COLORS[family.color] || FAMILY_COLORS.violet
+  const IconComponent = family.icon
+  const isPlaceholder = family.placeholder
+  const nodeCount = nodes.length
+  const operationalCount = nodes.filter((n) => isOperational(n)).length
+  const onboardingCount = nodes.filter((n) => n.lifecycle_status === "ONBOARDING").length
 
   return (
-    <motion.button
+    <motion.div
       custom={index}
-      variants={cardVariants}
+      variants={familyCardVariants}
       initial="hidden"
       animate="visible"
       exit="exit"
-      whileHover={{ scale: 1.01 }}
-      whileTap={{ scale: 0.99 }}
-      onClick={onNavigate}
-      disabled={onboarding || maintenance}
+      whileHover={isPlaceholder ? undefined : { scale: 1.015, y: -2 }}
+      transition={{ duration: 0.2 }}
       className={cn(
-        "w-full text-left rounded-xl border transition-all duration-300 relative overflow-hidden group",
-        // Operational glow
-        operational && colors.glow && `border-[${colors.main.replace('text-', '')}]/20`,
-        operational && !onboarding && !maintenance ? "hover:border-neutral-600" : "",
-        onboarding || maintenance ? "opacity-50 grayscale-[40%]" : "",
-        onboarding && "cursor-not-allowed",
-        !operational && !onboarding && "border-neutral-800/80 opacity-70",
+        "relative rounded-xl border overflow-hidden transition-all duration-300",
+        isPlaceholder
+          ? "border-neutral-800/60 bg-neutral-900/30"
+          : cn(
+              "border-neutral-800 hover:border-neutral-700",
+              hasOperational && colors.glow,
+            ),
+        isPlaceholder ? "" : "cursor-pointer group",
       )}
+      onClick={isPlaceholder ? undefined : onCardClick}
     >
-      {/* Top accent line for operational */}
-      {operational && !onboarding && !maintenance && (
-        <div className={cn("absolute top-0 left-0 right-0 h-px", colors.bg.replace('/10', '/30'))} style={{
-          background: `linear-gradient(90deg, transparent, ${enriched.integrationType === 'NATIVE' ? '#00ffcc' : '#a78bfa'}, transparent)`,
-          opacity: 0.4,
-        }} />
+      {/* Top gradient accent for active families */}
+      {!isPlaceholder && hasOperational && (
+        <div className={cn("absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r", colors.gradient)} />
       )}
 
       <div className="p-4 sm:p-5">
-        {/* Top row */}
+        {/* ── Top Row: Icon + Name + Status ── */}
         <div className="flex items-start justify-between gap-3">
-          <div className="flex items-start gap-3 min-w-0">
-            <div className={cn("mt-0.5 w-9 h-9 rounded-lg flex items-center justify-center shrink-0 border transition-colors", colors.bg, colors.border)}>
-              <Server className={cn("w-4 h-4", colors.main)} />
+          <div className="flex items-center gap-3 min-w-0">
+            <div className={cn(
+              "w-10 h-10 rounded-lg flex items-center justify-center shrink-0 border",
+              isPlaceholder
+                ? "bg-neutral-800/50 border-neutral-800"
+                : cn(colors.bg, colors.border),
+            )}>
+              <IconComponent className={cn("w-[18px] h-[18px]", isPlaceholder ? "text-neutral-600" : colors.main)} />
             </div>
             <div className="min-w-0">
-              <h3 className="text-sm font-semibold text-white truncate">{node.name}</h3>
-              <p className="text-[11px] font-mono text-neutral-500 mt-0.5 truncate">{node.id}</p>
+              <div className="flex items-center gap-2">
+                <h3 className={cn(
+                  "text-sm font-bold truncate",
+                  isPlaceholder ? "text-neutral-500" : "text-white",
+                )}>
+                  {family.label}
+                </h3>
+              </div>
+              <p className={cn(
+                "text-[11px] mt-0.5 truncate",
+                isPlaceholder ? "text-neutral-700" : "text-neutral-500",
+              )}>
+                {family.subtitle}
+              </p>
             </div>
           </div>
-          <div className="flex items-center gap-1.5 shrink-0 flex-wrap justify-end">
-            {/* Status badge */}
-            {operational && !onboarding && (
-              <span className="text-[9px] font-bold text-green-400 bg-green-400/10 border border-green-400/20 rounded-full px-2 py-0.5 shadow-[0_0_8px_rgba(34,197,94,0.15)]">
-                OPERACIONAL
+          <div className="flex items-center gap-1.5 shrink-0">
+            {isPlaceholder && family.placeholderTag && (
+              <span className="text-[9px] font-bold text-neutral-500 bg-neutral-800/80 border border-neutral-800 rounded-full px-2.5 py-0.5 uppercase tracking-wider">
+                {family.placeholderTag}
               </span>
             )}
-            {onboarding && (
+            {!isPlaceholder && hasOperational && operationalCount > 0 && (
+              <span className="text-[9px] font-bold text-green-400 bg-green-400/10 border border-green-400/20 rounded-full px-2 py-0.5 shadow-[0_0_8px_rgba(34,197,94,0.15)]">
+                ATIVO
+              </span>
+            )}
+            {!isPlaceholder && hasOnboarding && onboardingCount > 0 && (
               <span className="text-[9px] font-bold text-amber-400 bg-amber-400/10 border border-amber-400/20 rounded-full px-2 py-0.5 animate-pulse">
                 ONBOARDING
               </span>
             )}
-            {maintenance && (
-              <span className="text-[9px] font-bold text-orange-400 bg-orange-400/10 border border-orange-400/20 rounded-full px-2 py-0.5">
-                MAINTENANCE
-              </span>
-            )}
-            {/* PK indicator */}
-            {!onboarding && hasPublicKey && (
-              <span className="text-[9px] font-medium text-violet-400/80 bg-violet-400/5 border border-violet-400/10 rounded-full px-1.5 py-0.5">
-                PK
+            {!isPlaceholder && !hasOperational && !hasOnboarding && nodeCount > 0 && (
+              <span className="text-[9px] font-bold text-neutral-500 bg-neutral-800 border border-neutral-700 rounded-full px-2 py-0.5">
+                OFFLINE
               </span>
             )}
           </div>
         </div>
 
-        {/* Integration type + Region */}
-        <div className="flex items-center gap-2 mt-3">
-          <span className={cn(
-            "text-[9px] font-bold border rounded px-1.5 py-0.5",
-            enriched.integrationType === "NATIVE"
-              ? "text-emerald-400 bg-emerald-400/10 border-emerald-400/20"
-              : enriched.integrationType === "PASS_THROUGH"
-                ? "text-violet-400 bg-violet-400/10 border-violet-400/20"
-                : "text-neutral-600 bg-neutral-800 border-neutral-700"
-          )}>
-            {enriched.integrationType === "NATIVE" ? "NATIVE" : enriched.integrationType === "PASS_THROUGH" ? "PASS_THROUGH" : "—"}
-          </span>
-          <span className="text-[9px] font-medium text-neutral-600 bg-neutral-800/50 border border-neutral-800 rounded px-1.5 py-0.5">
-            {enriched.region}
-          </span>
-          {hasDocs && (
-            <span className="text-[9px] font-medium text-cyan-400 bg-cyan-400/10 border border-cyan-400/20 rounded px-1.5 py-0.5 ml-auto flex items-center gap-1">
-              <BookOpen className="w-2.5 h-2.5" /> Docs
-            </span>
-          )}
-        </div>
+        {/* ── Nodes Count + Integration Type ── */}
+        {!isPlaceholder && nodeCount > 0 && (
+          <div className="flex items-center gap-2 mt-3">
+            <div className="flex items-center gap-1.5 text-[10px] text-neutral-500">
+              <Server className="w-3 h-3" />
+              <span className="font-mono font-semibold">{nodeCount}</span>
+              <span>node{nodeCount !== 1 ? "s" : ""}</span>
+              {operationalCount > 0 && (
+                <span className="text-green-400/60">({operationalCount} op)</span>
+              )}
+            </div>
+            {integrationType !== "UNKNOWN" && (
+              <span className={cn(
+                "text-[9px] font-bold border rounded px-1.5 py-0.5",
+                integrationType === "NATIVE"
+                  ? "text-emerald-400 bg-emerald-400/10 border-emerald-400/20"
+                  : "text-violet-400 bg-violet-400/10 border-violet-400/20",
+              )}>
+                {integrationType === "NATIVE" ? "NATIVE" : "PASS_THROUGH"}
+              </span>
+            )}
+          </div>
+        )}
 
-        {/* Methods row */}
-        {enriched.hasCapabilities && enriched.methods.length > 0 && (
+        {/* ── Placeholder: children list ── */}
+        {isPlaceholder && family.children.length > 0 && (
           <div className="flex items-center gap-1.5 mt-3 flex-wrap">
-            {enriched.methods.slice(0, 5).map((method) => {
+            {family.children.map((child) => (
+              <span
+                key={child}
+                className="inline-flex items-center text-[10px] font-medium text-neutral-600 bg-neutral-800/40 border border-neutral-800 rounded-md px-2 py-0.5"
+              >
+                {child}
+              </span>
+            ))}
+          </div>
+        )}
+
+        {/* ── Methods ── */}
+        {!isPlaceholder && aggregatedMethods.length > 0 && (
+          <div className="flex items-center gap-1.5 mt-3 flex-wrap">
+            {aggregatedMethods.slice(0, 6).map((method) => {
               const MIcon = getMethodIcon(method)
               return (
                 <span
                   key={method}
                   className="inline-flex items-center gap-1 text-[10px] font-medium text-neutral-400 bg-neutral-800/60 border border-neutral-800 rounded-md px-1.5 py-0.5"
                 >
-                  <MIcon className="w-2.5 h-2.5" />
+                  <MIcon className="w-2.5 h-2.5 text-neutral-500" />
                   {method.toUpperCase()}
                 </span>
               )
             })}
-            {enriched.methods.length > 5 && (
-              <span className="text-[10px] text-neutral-600">+{enriched.methods.length - 5}</span>
+            {aggregatedMethods.length > 6 && (
+              <span className="text-[10px] text-neutral-600">+{aggregatedMethods.length - 6}</span>
             )}
           </div>
         )}
 
-        {/* Currencies */}
-        {enriched.hasCapabilities && enriched.currencies.length > 0 && (
+        {/* ── Currencies ── */}
+        {!isPlaceholder && aggregatedCurrencies.length > 0 && (
           <div className="flex items-center gap-1.5 mt-2 flex-wrap">
-            {enriched.currencies.map((c) => (
+            {aggregatedCurrencies.map((c) => (
               <span key={c} className="text-[9px] font-mono font-medium text-neutral-500 bg-neutral-900/80 border border-neutral-800 rounded px-1.5 py-0.5">
                 {c.toUpperCase()}
               </span>
@@ -425,121 +680,55 @@ function NodeCard({
           </div>
         )}
 
-        {/* Onboarding notice */}
-        {onboarding && (
-          <div className="mt-3 flex items-center gap-1.5">
-            <Loader2 className="w-3 h-3 text-amber-400 animate-spin" />
-            <span className="text-[11px] text-amber-400">Aguardando clearance técnico</span>
-          </div>
-        )}
+        {/* ── Bottom Row ── */}
+        <div className="flex items-center justify-between gap-2 mt-4 pt-3 border-t border-neutral-800/60">
+          {isPlaceholder ? (
+            <div className="flex items-center gap-1.5 text-[11px] text-neutral-600">
+              <Clock className="w-3 h-3" />
+              <span>Integração pendente</span>
+            </div>
+          ) : (
+            <>
+              <div className="flex items-center gap-2">
+                {/* Docs shortcut */}
+                {family.docsProvider && (
+                  <button
+                    onClick={onDocsClick}
+                    className={cn(
+                      "inline-flex items-center gap-1.5 text-[11px] font-medium px-2.5 py-1.5 rounded-lg border transition-all hover:scale-[1.03]",
+                      colors.badge,
+                    )}
+                  >
+                    <BookOpen className="w-3 h-3" />
+                    Docs
+                  </button>
+                )}
+                {/* Viva Countries */}
+                {family.hasVivaCountries && (
+                  <button
+                    onClick={onVivaCountriesClick}
+                    className="inline-flex items-center gap-1.5 text-[11px] font-medium px-2.5 py-1.5 rounded-lg border border-emerald-400/20 bg-emerald-400/10 text-emerald-400 transition-all hover:scale-[1.03] hover:bg-emerald-400/15"
+                  >
+                    <MapPin className="w-3 h-3" />
+                    Ver Países
+                  </button>
+                )}
+                {!family.docsProvider && !family.hasVivaCountries && (
+                  <div className="flex items-center gap-1.5 text-[11px] text-neutral-600">
+                    <ChevronRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+                    <span className="opacity-0 group-hover:opacity-100 transition-opacity text-neutral-500">Clique para detalhes</span>
+                  </div>
+                )}
+              </div>
+              <ChevronRight className={cn(
+                "w-3.5 h-3.5 transition-all",
+                "text-neutral-700 group-hover:text-neutral-400 group-hover:translate-x-0.5",
+              )} />
+            </>
+          )}
+        </div>
       </div>
-    </motion.button>
-  )
-}
-
-// ─── List Row ───────────────────────────────────────────
-function NodeListRow({
-  node,
-  enriched,
-  index,
-  onNavigate,
-}: {
-  node: PaymentNode
-  enriched: EnrichedNode
-  index: number
-  onNavigate: () => void
-}) {
-  const colors = getProviderColor(node.id)
-  const operational = isOperational(node)
-  const onboarding = node.lifecycle_status === "ONBOARDING"
-  const maintenance = node.lifecycle_status === "MAINTENANCE"
-  const hasPublicKey = node.public_key && node.public_key !== "N/A"
-  const provider = getProviderFromNode(node.id)
-  const hasDocs = provider === "viva"
-
-  return (
-    <motion.button
-      custom={index}
-      variants={listRowVariants}
-      initial="hidden"
-      animate="visible"
-      exit="exit"
-      whileHover={{ backgroundColor: "rgba(255,255,255,0.02)" }}
-      onClick={onNavigate}
-      disabled={onboarding || maintenance}
-      className={cn(
-        "w-full text-left px-4 py-3 border-b border-neutral-800/50 transition-all flex items-center gap-4",
-        onboarding || maintenance ? "opacity-50 grayscale-[40%] cursor-not-allowed" : "hover:bg-white/[0.02]",
-        !operational && !onboarding && "opacity-70",
-      )}
-    >
-      {/* Node icon */}
-      <div className={cn("w-8 h-8 rounded-lg flex items-center justify-center shrink-0 border", colors.bg, colors.border)}>
-        <Server className={cn("w-3.5 h-3.5", colors.main)} />
-      </div>
-
-      {/* Name + ID */}
-      <div className="min-w-0 flex-1">
-        <p className="text-xs font-semibold text-white truncate">{node.name}</p>
-        <p className="text-[10px] font-mono text-neutral-600 truncate">{node.id}</p>
-      </div>
-
-      {/* Status */}
-      <div className="shrink-0 hidden sm:block">
-        {operational && !onboarding && (
-          <span className="text-[9px] font-bold text-green-400 bg-green-400/10 border border-green-400/20 rounded-full px-2 py-0.5">
-            OPERACIONAL
-          </span>
-        )}
-        {onboarding && (
-          <span className="text-[9px] font-bold text-amber-400 bg-amber-400/10 border border-amber-400/20 rounded-full px-2 py-0.5 animate-pulse">
-            ONBOARDING
-          </span>
-        )}
-        {maintenance && (
-          <span className="text-[9px] font-bold text-orange-400 bg-orange-400/10 border border-orange-400/20 rounded-full px-2 py-0.5">
-            MAINTENANCE
-          </span>
-        )}
-      </div>
-
-      {/* Region */}
-      <span className="text-[10px] font-mono text-neutral-500 bg-neutral-800/50 border border-neutral-800 rounded px-2 py-0.5 shrink-0 hidden md:block">
-        {enriched.region}
-      </span>
-
-      {/* Integration Type */}
-      <span className={cn(
-        "text-[9px] font-bold border rounded px-1.5 py-0.5 shrink-0 hidden lg:block",
-        enriched.integrationType === "NATIVE"
-          ? "text-emerald-400 bg-emerald-400/10 border-emerald-400/20"
-          : enriched.integrationType === "PASS_THROUGH"
-            ? "text-violet-400 bg-violet-400/10 border-violet-400/20"
-            : "text-neutral-600 bg-neutral-800 border-neutral-700"
-      )}>
-        {enriched.integrationType === "NATIVE" ? "NATIVE" : enriched.integrationType === "PASS_THROUGH" ? "PASS_THROUGH" : "—"}
-      </span>
-
-      {/* Methods pills */}
-      <div className="hidden lg:flex items-center gap-1 shrink-0 max-w-[200px] overflow-hidden">
-        {enriched.methods.slice(0, 3).map((m) => {
-          const MI = getMethodIcon(m)
-          return (
-            <span key={m} className="inline-flex items-center gap-0.5 text-[9px] text-neutral-500 bg-neutral-800/60 border border-neutral-800 rounded px-1 py-0.5 whitespace-nowrap">
-              <MI className="w-2.5 h-2.5" />{m.toUpperCase()}
-            </span>
-          )
-        })}
-        {enriched.methods.length > 3 && <span className="text-[9px] text-neutral-600">+{enriched.methods.length - 3}</span>}
-      </div>
-
-      {/* Actions */}
-      <div className="flex items-center gap-2 shrink-0">
-        {hasPublicKey && <span className="text-[9px] font-medium text-violet-400/70 bg-violet-400/5 border border-violet-400/10 rounded px-1.5 py-0.5 hidden sm:inline">PK</span>}
-        {hasDocs && <BookOpen className="w-3 h-3 text-cyan-400/60" />}
-        <ChevronRight className="w-3.5 h-3.5 text-neutral-700 group-hover:text-neutral-400 transition-colors" />
-      </div>
-    </motion.button>
+    </motion.div>
   )
 }
 
@@ -562,15 +751,15 @@ function SidePanel({
   const hasPublicKey = node.public_key && node.public_key !== "N/A"
   const jsonPayload = useMemo(() => getJsonPayload(node.id), [node.id])
   const provider = getProviderFromNode(node.id)
-  const hasDocs = provider === "viva"
+  const hasDocs = provider === "viva" || provider === "sibs" || provider === "stripe" || provider === "mollie"
 
   return (
     <div className="fixed inset-y-0 right-0 z-50 w-full sm:w-[560px] bg-neutral-950 border-l border-neutral-800 shadow-2xl flex flex-col">
       <motion.div
-        initial={{ x: "100%" }}
-        animate={{ x: 0 }}
-        exit={{ x: "100%" }}
-        transition={{ type: "spring", damping: 25, stiffness: 200 }}
+        variants={panelSlideVariants}
+        initial="hidden"
+        animate="visible"
+        exit="exit"
         className="flex flex-col h-full"
       >
         {/* Panel Header */}
@@ -774,7 +963,7 @@ function SidePanel({
               </pre>
             </div>
             <p className="text-[11px] text-neutral-600">
-              Events delivered to webhook_callback_url configured in Security & Webhooks.
+              Events delivered to webhook_callback_url configured in Security &amp; Webhooks.
             </p>
           </div>
         </div>
@@ -823,8 +1012,6 @@ export function HubView() {
   const { data: clientData } = useClientData()
   const selectedNodeId = useAppStore((s) => s.selectedNodeId)
   const setSelectedNodeId = useAppStore((s) => s.setSelectedNodeId)
-  const hubViewMode = useAppStore((s) => s.hubViewMode)
-  const setHubViewMode = useAppStore((s) => s.setHubViewMode)
   const setActiveView = useAppStore((s) => s.setActiveView)
   const setSelectedDocsProvider = useAppStore((s) => s.setSelectedDocsProvider)
 
@@ -848,24 +1035,81 @@ export function HubView() {
     })
   }, [data, capsData])
 
-  // Stats
-  const stats = useMemo(() => {
-    const total = enrichedNodes.length
-    const operational = enrichedNodes.filter((n) => isOperational(n)).length
-    const onboarding = enrichedNodes.filter((n) => n.lifecycle_status === "ONBOARDING").length
-    const withCaps = enrichedNodes.filter((n) => n.hasCapabilities).length
-    return { total, operational, onboarding, withCaps }
+  // Group nodes by family
+  const familyDataMap = useMemo((): Map<FamilyId, FamilyData> => {
+    const map = new Map<FamilyId, FamilyData>()
+    for (const family of FAMILIES) {
+      const familyNodes = family.nodeMatch
+        ? enrichedNodes.filter((n) => n.id.toUpperCase().includes(family.nodeMatch!))
+        : []
+
+      const allMethods = [...new Set(familyNodes.flatMap((n) => n.methods))]
+      const allCurrencies = [...new Set(familyNodes.flatMap((n) => n.currencies))]
+      const hasOperational = familyNodes.some((n) => isOperational(n))
+      const hasOnboarding = familyNodes.some((n) => n.lifecycle_status === "ONBOARDING")
+
+      const integrationTypes = new Set(
+        familyNodes.map((n) => n.integrationType).filter((t) => t !== "UNKNOWN"),
+      )
+      let integrationType: "NATIVE" | "PASS_THROUGH" | "UNKNOWN" = "UNKNOWN"
+      if (integrationTypes.has("NATIVE")) integrationType = "NATIVE"
+      else if (integrationTypes.has("PASS_THROUGH")) integrationType = "PASS_THROUGH"
+
+      map.set(family.id, {
+        family,
+        nodes: familyNodes,
+        aggregatedMethods: allMethods,
+        aggregatedCurrencies: allCurrencies,
+        hasOperational,
+        hasOnboarding,
+        integrationType,
+      })
+    }
+    return map
   }, [enrichedNodes])
 
-  // Handle node click → dynamic doc routing
-  const handleNodeClick = useCallback((node: EnrichedNode) => {
-    setSelectedNodeId(node.id)
-    const provider = getProviderFromNode(node.id)
-    if (provider === "viva") {
-      // Open side panel with "Ver Docs" button
-    }
-  }, [setSelectedNodeId])
+  // Stats
+  const stats = useMemo(() => {
+    const totalFamilies = FAMILIES.length
+    let activeProviders = 0
+    let onboardingProviders = 0
+    let totalNodes = 0
 
+    for (const [, fd] of familyDataMap) {
+      if (fd.hasOperational) activeProviders++
+      if (fd.hasOnboarding) onboardingProviders++
+      totalNodes += fd.nodes.length
+    }
+
+    return { totalFamilies, activeProviders, onboardingProviders, totalNodes }
+  }, [familyDataMap])
+
+  // Handle family card click → open side panel with first node
+  const handleFamilyCardClick = useCallback((familyId: FamilyId) => {
+    const fd = familyDataMap.get(familyId)
+    if (fd && fd.nodes.length > 0) {
+      setSelectedNodeId(fd.nodes[0].id)
+    }
+  }, [familyDataMap, setSelectedNodeId])
+
+  // Handle docs shortcut on family card
+  const handleFamilyDocsClick = useCallback((familyId: FamilyId) => {
+    const fd = familyDataMap.get(familyId)
+    if (fd?.family.docsProvider) {
+      setSelectedDocsProvider(fd.family.docsProvider)
+      setSelectedNodeId(null)
+      setActiveView("docs")
+    } else {
+      setShowNoDocs(true)
+    }
+  }, [familyDataMap, setSelectedDocsProvider, setSelectedNodeId, setActiveView])
+
+  // Handle Viva Countries button
+  const handleVivaCountriesClick = useCallback(() => {
+    setActiveView("viva-countries")
+  }, [setActiveView])
+
+  // Handle Go to Docs from Side Panel
   const handleGoToDocs = useCallback((node: EnrichedNode) => {
     const provider = getProviderFromNode(node.id)
     if (provider) {
@@ -880,23 +1124,32 @@ export function HubView() {
 
   const selectedEnriched = enrichedNodes.find((n) => n.id === selectedNodeId) || null
 
-  // Loading
+  // ── Loading ──
   if (loading) {
     return (
       <div className="space-y-6 animate-in fade-in">
         <div className="space-y-2">
           <Skeleton className="h-7 w-48 bg-neutral-800" />
-          <Skeleton className="h-4 w-64 bg-neutral-800" />
+          <Skeleton className="h-4 w-72 bg-neutral-800" />
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
           {[1, 2, 3, 4].map((i) => (
+            <Skeleton key={i} className="h-20 rounded-lg bg-neutral-800" />
+          ))}
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3">
+          {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
             <div key={i} className="rounded-xl border border-neutral-800 bg-neutral-900/50 p-5">
               <div className="flex items-start gap-3">
-                <Skeleton className="w-9 h-9 rounded-lg bg-neutral-800" />
+                <Skeleton className="w-10 h-10 rounded-lg bg-neutral-800" />
                 <div className="space-y-2 flex-1">
-                  <Skeleton className="h-4 w-32 bg-neutral-800" />
-                  <Skeleton className="h-3 w-24 bg-neutral-800" />
+                  <Skeleton className="h-4 w-24 bg-neutral-800" />
+                  <Skeleton className="h-3 w-36 bg-neutral-800" />
                 </div>
+              </div>
+              <div className="mt-3 space-y-2">
+                <Skeleton className="h-5 w-16 bg-neutral-800" />
+                <Skeleton className="h-5 w-24 bg-neutral-800" />
               </div>
             </div>
           ))}
@@ -905,7 +1158,7 @@ export function HubView() {
     )
   }
 
-  // Error
+  // ── Error ──
   if (error || !data) {
     return (
       <div className="rounded-xl border border-red-500/20 bg-red-400/5 p-8 text-center animate-in fade-in">
@@ -920,54 +1173,32 @@ export function HubView() {
 
   return (
     <div className="animate-in fade-in duration-300">
-      {/* Header + Toggle */}
+      {/* ── Header ── */}
       <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-5">
         <div>
           <div className="flex items-center gap-3">
             <h2 className="text-lg font-semibold text-white">Integration Hub</h2>
             <span className="text-[10px] font-mono text-neutral-600 bg-neutral-800/50 border border-neutral-800 rounded px-2 py-0.5">
-              {stats.total} nodes
+              {FAMILIES.length} families
             </span>
           </div>
           <p className="text-sm text-neutral-500 mt-0.5">
-            Biblioteca de Contas — Seleccione um gateway para ver documentação e snippets
+            Biblioteca de Families — Seleccione uma família para ver gateways e documentação
           </p>
         </div>
 
-        {/* View Toggle + Refresh */}
         <div className="flex items-center gap-2">
-          {/* Capabilities indicator */}
           {!capsLoading && (
             <div className={cn(
               "flex items-center gap-1.5 text-[10px] px-2 py-1 rounded-md border",
-              stats.withCaps > 0
+              stats.totalNodes > 0
                 ? "text-green-400/70 bg-green-400/5 border-green-400/10"
-                : "text-amber-400/70 bg-amber-400/5 border-amber-400/10"
+                : "text-neutral-600 bg-neutral-800/50 border-neutral-800"
             )}>
               <CircleDot className="w-2.5 h-2.5" />
-              {stats.withCaps}/{stats.total} Capabilities
+              {stats.totalNodes} nodes
             </div>
           )}
-          <div className="flex items-center border border-neutral-800 rounded-lg overflow-hidden">
-            <button
-              onClick={() => setHubViewMode("card")}
-              className={cn(
-                "p-2 transition-all",
-                hubViewMode === "card" ? "bg-neutral-800 text-white" : "text-neutral-600 hover:text-neutral-400"
-              )}
-            >
-              <LayoutGrid className="w-3.5 h-3.5" />
-            </button>
-            <button
-              onClick={() => setHubViewMode("list")}
-              className={cn(
-                "p-2 transition-all",
-                hubViewMode === "list" ? "bg-neutral-800 text-white" : "text-neutral-600 hover:text-neutral-400"
-              )}
-            >
-              <List className="w-3.5 h-3.5" />
-            </button>
-          </div>
           <button
             onClick={refetch}
             className="p-2 rounded-lg border border-neutral-800 text-neutral-600 hover:text-neutral-400 hover:border-neutral-700 transition-all"
@@ -977,99 +1208,104 @@ export function HubView() {
         </div>
       </div>
 
-      {/* Stats bar */}
+      {/* ── Stats Bar ── */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-5">
         {[
-          { label: "Total Nodes", value: stats.total, color: "text-white" },
-          { label: "Operacionais", value: stats.operational, color: "text-green-400" },
-          { label: "Onboarding", value: stats.onboarding, color: "text-amber-400" },
-          { label: "Com Capabilities", value: stats.withCaps, color: "text-cyan-400" },
-        ].map((s) => (
-          <div key={s.label} className="rounded-lg bg-neutral-900/40 border border-neutral-800 px-3 py-2.5">
-            <p className={cn("text-base font-bold font-mono", s.color)}>{s.value}</p>
-            <p className="text-[10px] text-neutral-600 uppercase tracking-wider">{s.label}</p>
-          </div>
-        ))}
+          { label: "Total Families", value: stats.totalFamilies, color: "text-white", icon: Layers },
+          { label: "Active Providers", value: stats.activeProviders, color: "text-green-400", icon: CircleDot },
+          { label: "Onboarding", value: stats.onboardingProviders, color: "text-amber-400", icon: Loader2 },
+          { label: "Total Nodes", value: stats.totalNodes, color: "text-cyan-400", icon: Server },
+        ].map((s) => {
+          const SIcon = s.icon
+          return (
+            <div key={s.label} className="rounded-lg bg-neutral-900/40 border border-neutral-800 px-3 py-2.5 flex items-center gap-2.5">
+              <SIcon className={cn("w-4 h-4 shrink-0", s.color, "opacity-50")} />
+              <div>
+                <p className={cn("text-base font-bold font-mono leading-none", s.color)}>{s.value}</p>
+                <p className="text-[10px] text-neutral-600 uppercase tracking-wider mt-0.5">{s.label}</p>
+              </div>
+            </div>
+          )
+        })}
       </div>
 
-      {/* Capabilities fallback banner */}
-      {!capsLoading && stats.withCaps === 0 && stats.total > 0 && (
+      {/* ── Geo-Aware Info Banner ── */}
+      <motion.div
+        variants={bannerVariants}
+        initial="hidden"
+        animate="visible"
+        className="rounded-lg bg-gradient-to-r from-cyan-500/5 via-blue-500/5 to-transparent border border-cyan-400/10 px-4 py-3 mb-5"
+      >
+        <div className="flex items-start gap-3">
+          <div className="w-8 h-8 rounded-lg bg-cyan-400/10 border border-cyan-400/15 flex items-center justify-center shrink-0 mt-0.5">
+            <MapPin className="w-4 h-4 text-cyan-400" />
+          </div>
+          <div className="min-w-0">
+            <h4 className="text-xs font-semibold text-cyan-300/90 uppercase tracking-wider">Geo-Aware Architecture</h4>
+            <p className="text-[12px] text-cyan-400/60 leading-relaxed mt-0.5">
+              A arquitetura NeXFlowX suporta capacidades Geo-Aware — os métodos de pagamento são filtrados automaticamente pelo contexto do pagador (IP / Country Code) para maximizar a conversão.
+            </p>
+          </div>
+        </div>
+      </motion.div>
+
+      {/* ── Capabilities fallback banner ── */}
+      {!capsLoading && stats.totalNodes > 0 && enrichedNodes.every((n) => !n.hasCapabilities) && (
         <div className="flex items-center gap-2 rounded-lg bg-amber-400/5 border border-amber-400/10 px-3.5 py-2.5 mb-4">
           <AlertTriangle className="w-3.5 h-3.5 text-amber-400 shrink-0" />
           <p className="text-xs text-amber-400/70">
-            Capabilities endpoint unavailable — a exibir metadados em modo fallback (hardcoded).
+            Capabilities endpoint unavailable — a exibir metadados em modo fallback.
           </p>
         </div>
       )}
 
-      {/* Content Area */}
+      {/* ── Family Cards Grid ── */}
       <AnimatePresence mode="wait">
-        {hubViewMode === "card" ? (
-          <motion.div
-            key="card-view"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3"
-          >
-            {enrichedNodes.map((node, i) => (
-              <NodeCard
-                key={node.id}
-                node={node}
-                enriched={node}
+        <motion.div
+          key="family-grid"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.2 }}
+          className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3"
+        >
+          {FAMILIES.map((family, i) => {
+            const fd = familyDataMap.get(family.id)!
+            return (
+              <FamilyCard
+                key={family.id}
+                familyData={fd}
                 index={i}
-                onNavigate={() => handleNodeClick(node)}
+                onCardClick={() => handleFamilyCardClick(family.id)}
+                onDocsClick={(e) => {
+                  e.stopPropagation()
+                  handleFamilyDocsClick(family.id)
+                }}
+                onVivaCountriesClick={(e) => {
+                  e.stopPropagation()
+                  handleVivaCountriesClick()
+                }}
               />
-            ))}
-          </motion.div>
-        ) : (
-          <motion.div
-            key="list-view"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="rounded-xl border border-neutral-800 overflow-hidden"
-          >
-            {/* List header */}
-            <div className="flex items-center gap-4 px-4 py-2.5 border-b border-neutral-800 bg-neutral-900/50">
-              <span className="text-[10px] font-semibold text-neutral-600 uppercase tracking-wider w-8">Node</span>
-              <span className="text-[10px] font-semibold text-neutral-600 uppercase tracking-wider flex-1 min-w-0">Identidade</span>
-              <span className="text-[10px] font-semibold text-neutral-600 uppercase tracking-wider hidden sm:block w-20">Status</span>
-              <span className="text-[10px] font-semibold text-neutral-600 uppercase tracking-wider hidden md:block w-10">Região</span>
-              <span className="text-[10px] font-semibold text-neutral-600 uppercase tracking-wider hidden lg:block w-24">Tipo</span>
-              <span className="text-[10px] font-semibold text-neutral-600 uppercase tracking-wider hidden lg:block">Métodos</span>
-              <span className="w-8" />
-            </div>
-            {/* List rows */}
-            {enrichedNodes.map((node, i) => (
-              <NodeListRow
-                key={node.id}
-                node={node}
-                enriched={node}
-                index={i}
-                onNavigate={() => handleNodeClick(node)}
-              />
-            ))}
-          </motion.div>
-        )}
+            )
+          })}
+        </motion.div>
       </AnimatePresence>
 
-      {/* Backdrop */}
+      {/* ── Side Panel Overlay ── */}
       <AnimatePresence>
         {selectedEnriched && (
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+            variants={panelOverlayVariants}
+            initial="hidden"
+            animate="visible"
+            exit="exit"
             className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm sm:bg-black/20 sm:backdrop-blur-[2px]"
             onClick={() => setSelectedNodeId(null)}
           />
         )}
       </AnimatePresence>
 
-      {/* Side Panel */}
+      {/* ── Side Panel ── */}
       <AnimatePresence>
         {selectedEnriched && (
           <SidePanel
@@ -1083,7 +1319,7 @@ export function HubView() {
         )}
       </AnimatePresence>
 
-      {/* No Docs Toast */}
+      {/* ── No Docs Toast ── */}
       <AnimatePresence>
         {showNoDocs && (
           <NoDocsToast onClose={() => setShowNoDocs(false)} />

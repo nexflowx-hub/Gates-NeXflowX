@@ -21,11 +21,12 @@ import {
   XCircle,
   Timer,
   RotateCcw,
+  Landmark,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 // ─── Types ──────────────────────────────────────────────
-type ProviderId = "viva" | "sibs" | "stripe" | "mollie" | "sepa" | "pix" | "crypto"
+type ProviderId = "viva" | "sibs" | "stripe" | "mollie" | "sepa" | "eupago" | "pix" | "crypto"
 
 interface Provider {
   id: ProviderId
@@ -87,6 +88,18 @@ const PROVIDERS: Provider[] = [
     borderColor: "border-amber-400/20",
     textColor: "text-amber-400",
     icon: Wallet,
+    hasDocs: false,
+    tag: "Em Breve",
+  },
+  {
+    id: "eupago",
+    name: "Eupago",
+    subtitle: "Pagamentos Portugal",
+    color: "teal",
+    bgColor: "bg-teal-400/10",
+    borderColor: "border-teal-400/20",
+    textColor: "text-teal-400",
+    icon: Landmark,
     hasDocs: false,
     tag: "Em Breve",
   },

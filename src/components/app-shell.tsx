@@ -5,17 +5,22 @@ import { LoginScreen } from "@/components/login-screen"
 import { SecurityView } from "@/components/security-view"
 import { HubView } from "@/components/hub-view"
 import { DocsView } from "@/components/docs-view"
+import { VivaCountriesView } from "@/components/viva-countries-view"
 import {
   LogOut,
   ShieldCheck,
   Puzzle,
   BookOpen,
   User,
+  ArrowLeft,
+  MapPin,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 export function AppShell() {
   const { auth, logout, activeView, setActiveView } = useAppStore()
+
+  const showBackButton = activeView === "viva-countries"
 
   return (
     <div className="min-h-screen flex flex-col bg-[#0A0A0A]">
@@ -79,7 +84,7 @@ export function AppShell() {
               onClick={() => setActiveView("hub")}
               className={cn(
                 "inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all",
-                activeView === "hub"
+                activeView === "hub" || activeView === "viva-countries"
                   ? "bg-neutral-800 text-white"
                   : "text-neutral-500 hover:text-neutral-300"
               )}
@@ -106,7 +111,7 @@ export function AppShell() {
       {/* Main Content */}
       <main className="flex-1 relative z-10">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 lg:py-8">
-          {activeView === "security" ? <SecurityView /> : activeView === "hub" ? <HubView /> : <DocsView />}
+          {activeView === "security" ? <SecurityView /> : activeView === "hub" ? <HubView /> : activeView === "viva-countries" ? <VivaCountriesView /> : <DocsView />}
         </div>
       </main>
 

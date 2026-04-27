@@ -10,15 +10,18 @@ export interface AuthState {
   authToken: string
 }
 
-type ProviderId = "viva" | "sibs" | "stripe" | "mollie" | "sepa" | "pix" | "crypto"
+type ProviderId = "viva" | "sibs" | "stripe" | "mollie" | "sepa" | "eupago" | "pix" | "crypto"
+type FamilyId = "stripe" | "sibs" | "eupago" | "viva" | "sepa" | "mollie" | "brasil" | "crypto"
 type ViewMode = "card" | "list"
 
 interface AppState {
   auth: AuthState
   login: (username: string, password: string) => boolean
   logout: () => void
-  activeView: "security" | "hub" | "docs"
-  setActiveView: (view: "security" | "hub" | "docs") => void
+  activeView: "security" | "hub" | "docs" | "viva-countries"
+  setActiveView: (view: "security" | "hub" | "docs" | "viva-countries") => void
+  hubSelectedFamily: FamilyId | null
+  setHubSelectedFamily: (family: FamilyId | null) => void
   selectedNodeId: string | null
   setSelectedNodeId: (id: string | null) => void
   selectedDocsProvider: ProviderId | null
@@ -70,11 +73,13 @@ export const useAppStore = create<AppState>()(
         })
       },
       activeView: "security",
-      setActiveView: (view) => set({ activeView: view, selectedNodeId: null, selectedDocsProvider: null }),
+      setActiveView: (view) => set({ activeView: view, selectedNodeId: null, selectedDocsProvider: null, hubSelectedFamily: null }),
       selectedNodeId: null,
       setSelectedNodeId: (id) => set({ selectedNodeId: id }),
       selectedDocsProvider: null,
       setSelectedDocsProvider: (provider) => set({ selectedDocsProvider: provider }),
+      hubSelectedFamily: null,
+      setHubSelectedFamily: (family) => set({ hubSelectedFamily: family }),
       hubViewMode: "card",
       setHubViewMode: (mode) => set({ hubViewMode: mode }),
     }),
@@ -88,4 +93,4 @@ export const useAppStore = create<AppState>()(
   )
 )
 
-export type { ProviderId, ViewMode }
+export type { ProviderId, ViewMode, FamilyId }
